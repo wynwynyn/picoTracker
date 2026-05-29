@@ -23,7 +23,7 @@ add_compile_options(
 )
 
 if (NOT DEFINED ADV)
-  set(ADV false)
+  set(ADV true)
 endif()
 
 

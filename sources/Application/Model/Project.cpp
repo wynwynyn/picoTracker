@@ -35,7 +35,11 @@
 #define DATA_UNUSED_VALUE 0xFF
 
 Project::Project(const char *name)
-    : Persistent("PROJECT"), VariableContainer(&variables_), song_(),
+    : Persistent("PROJECT"), VariableContainer(&variables_),
+#ifdef ADV
+      song_(ModelStorage_GetSong()),
+      instrumentBank_(ModelStorage_GetInstrumentBank()),
+#endif
       tempoNudge_(0), tempo_(FourCC::VarTempo, DEFAULT_TEMPO),
       masterVolume_(FourCC::VarMasterVolume, DEFAULT_MASTER_VOLUME),
       channelVolume1_(FourCC::VarChannel1Volume, DEFAULT_CHANNEL_VOLUME),
@@ -50,7 +54,12 @@ Project::Project(const char *name)
       scale_(FourCC::VarScale, scaleNames, numScales, 0),
       scaleRoot_(FourCC::VarScaleRoot, noteNames, 12, 0),
       projectName_(FourCC::VarProjectName, name),
-      previewVolume_(FourCC::VarPreviewVolume, DEFAULT_PREVIEW_VOLUME) {
+      previewVolume_(FourCC::VarPreviewVolume, DEFAULT_PREVIEW_VOLUME)
+#ifndef ADV
+      ,
+      song_(), instrumentBank_()
+#endif
+{
 
   this->variables_.insert(variables_.end(), &tempo_);
   this->variables_.insert(variables_.end(), &masterVolume_);
@@ -273,7 +282,7 @@ void Project::Purge() {
   ushort *param2 = song_.phrase_.param2_;
 
   for (int i = 0; i < PHRASE_COUNT; i++) {
-    for (int j = 0; j < 16; j++) {
+    for (int j = 0; j < MAX_STEPS_PER_PHRASE; j++) {
       if (!song_.phrase_.IsUsed(i)) {
         *data = DATA_UNUSED_VALUE;
         *data2 = DATA_UNUSED_VALUE;
@@ -348,7 +357,7 @@ void Project::PurgeInstruments() {
   unsigned char *data = song_.phrase_.instr_;
 
   for (int i = 0; i < PHRASE_COUNT; i++) {
-    for (int j = 0; j < 16; j++) {
+    for (int j = 0; j < MAX_STEPS_PER_PHRASE; j++) {
       if (*data != DATA_UNUSED_VALUE) {
         NAssert(*data < MAX_INSTRUMENT_COUNT);
         used[*data] = true;

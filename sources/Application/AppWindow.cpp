@@ -27,6 +27,7 @@
 #include "Application/Views/ModalDialogs/FullScreenBox.h"
 #include "Application/Views/ModalDialogs/MessageBox.h"
 #include "Application/Views/NullView.h"
+#include "Application/Views/PhraseSettingsView.h"
 #include "Application/Views/PhraseView.h"
 #include "Application/Views/ProjectView.h"
 #include "Application/Views/RecordView.h"
@@ -96,6 +97,7 @@ struct AppWindowViews {
   SongView songView;
   ChainView chainView;
   PhraseView phraseView;
+  PhraseSettingsView phraseSettingsView;
   DeviceView deviceView;
   ThemeView themeView;
   ThemeImportView themeImportView;
@@ -114,14 +116,15 @@ struct AppWindowViews {
 
   AppWindowViews(GUIWindow &w, ViewData &viewData)
       : songView(w, &viewData), chainView(w, &viewData),
-        phraseView(w, &viewData), deviceView(w, &viewData),
-        themeView(w, &viewData), themeImportView(w, &viewData),
-        projectView(w, &viewData), importView(w, &viewData),
-        instrumentImportView(w, &viewData), instrumentView(w, &viewData),
-        tableView(w, &viewData), grooveView(w, &viewData),
-        selectProjectView(w, &viewData), mixerView(w, &viewData),
-        sampleEditorView(w, &viewData), sampleSlicesView(w, &viewData),
-        recordView(w, &viewData), nullView(w, &viewData) {}
+        phraseView(w, &viewData), phraseSettingsView(w, &viewData),
+        deviceView(w, &viewData), themeView(w, &viewData),
+        themeImportView(w, &viewData), projectView(w, &viewData),
+        importView(w, &viewData), instrumentImportView(w, &viewData),
+        instrumentView(w, &viewData), tableView(w, &viewData),
+        grooveView(w, &viewData), selectProjectView(w, &viewData),
+        mixerView(w, &viewData), sampleEditorView(w, &viewData),
+        sampleSlicesView(w, &viewData), recordView(w, &viewData),
+        nullView(w, &viewData) {}
 };
 
 void AppWindow::defineColor(FourCC colorCode, GUIColor &color,
@@ -187,6 +190,7 @@ AppWindow::AppWindow(I_GUIWindowImp &imp, const char *projectName)
   views_->songView.AddObserver(*this);
   views_->chainView.AddObserver(*this);
   views_->phraseView.AddObserver(*this);
+  views_->phraseSettingsView.AddObserver(*this);
   views_->deviceView.AddObserver(*this);
   views_->themeView.AddObserver(*this);
   views_->themeImportView.AddObserver(*this);
@@ -489,6 +493,7 @@ AppWindow::LoadProjectResult AppWindow::LoadProject(const char *projectName) {
     views_->songView.Reset();
     views_->chainView.Reset();
     views_->phraseView.Reset();
+    views_->phraseSettingsView.Reset();
     views_->grooveView.Reset();
     views_->tableView.Reset();
     views_->projectView.Reset();
@@ -801,7 +806,7 @@ void AppWindow::AnimationUpdate() {
   }
 }
 
-void AppWindow::LayoutChildren(){};
+void AppWindow::LayoutChildren() {}
 
 void AppWindow::Update(Observable &o, I_ObservableData *d) {
   if (d && (uintptr_t)d == (uintptr_t)FourCC::VarProjectName) {
@@ -835,6 +840,9 @@ void AppWindow::Update(Observable &o, I_ObservableData *d) {
       break;
     case VT_PHRASE:
       _currentView = &views_->phraseView;
+      break;
+    case VT_PHRASE_SETTINGS:
+      _currentView = &views_->phraseSettingsView;
       break;
     case VT_DEVICE:
       _currentView = &views_->deviceView;

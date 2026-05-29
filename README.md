@@ -14,6 +14,23 @@ Some features include:
 - [ ] [very experimental] Able to set table lengths
 - [ ] [very experimental] Chain tables together (trigger `TBL` from tables)
 
+### Advance SDRAM model data (`experiment-memory-refactor`)
+
+On picoTracker Advance, this branch moves the song grid, instrument bank, tables, and groove data out of internal RAM into named SDRAM1 sections (`.SONG_DATA`, `.INSTRUMENT_BANK`, `.TABLE_DATA`, `.GROOVE_DATA`). Pico builds are unchanged.
+
+Build Advance firmware (see `docs/DEV.md`; `ADV` defaults to `true`):
+
+```bash
+mkdir build
+cd build
+cmake -DCMAKE_BUILD_TYPE=Release ../sources
+make -j8
+```
+
+A successful link means internal RAM overflow is resolved. Optionally inspect `build/Adapters/adv/picoTrackerAdvance.map` and confirm the four sections sit after the existing SDRAM1 pools and that `__groove_data_end` is below `0xC2000000`.
+
+After flashing, smoke test load/save, long phrase editing, instruments, tables, grooves, and playback while editing a phrase.
+
 These features will only be tested on pTA, because pT probably doesn't have enough resources spare.
 
 # picoTracker

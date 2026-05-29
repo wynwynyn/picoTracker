@@ -12,6 +12,9 @@
 #include "Application/Model/Config.h"
 #include "Application/Persistency/PersistenceConstants.h"
 #include "Application/Persistency/PersistencyService.h"
+#ifdef ADV
+#include "Application/Model/ModelStorage.h"
+#endif
 #include "Services/Audio/Audio.h"
 #include "Services/Midi/MidiService.h"
 #include "System/FileSystem/FileSystem.h"
@@ -26,6 +29,11 @@ Application::Application() {}
 
 bool Application::Init(GUICreateWindowParams &params) {
   PersistencyService::GetInstance();
+#ifdef ADV
+  // After FMC init; must run after PersistencyService so Song/InstrumentBank
+  // register for save/load.
+  ModelStorage_Init();
+#endif
 
   ensurePTDirsExist();
 

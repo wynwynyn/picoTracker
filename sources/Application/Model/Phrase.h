@@ -19,7 +19,13 @@
 #define PHRASE_COUNT 0x80
 #define NO_MORE_PHRASE 0x81
 #endif
-#define STEPS_PER_PHRASE 16
+
+#define MIN_STEPS_PER_PHRASE 16
+#define MAX_STEPS_PER_PHRASE 64
+#define LEGACY_STEPS_PER_PHRASE 16
+
+// Storage stride for phrase step arrays (active length may be less).
+#define STEPS_PER_PHRASE MAX_STEPS_PER_PHRASE
 
 class Phrase {
 public:
@@ -31,12 +37,17 @@ public:
   void SetUsed(uchar c);
   void ClearAllocation();
 
-  uchar note_[PHRASE_COUNT * STEPS_PER_PHRASE];
-  uchar instr_[PHRASE_COUNT * STEPS_PER_PHRASE];
-  FourCC cmd1_[PHRASE_COUNT * STEPS_PER_PHRASE];
-  ushort param1_[PHRASE_COUNT * STEPS_PER_PHRASE];
-  FourCC cmd2_[PHRASE_COUNT * STEPS_PER_PHRASE];
-  ushort param2_[PHRASE_COUNT * STEPS_PER_PHRASE];
+  static int GetStepOffset(uchar phraseIndex, int step);
+  uchar GetLength(uchar phraseIndex) const;
+  void SetLength(uchar phraseIndex, uchar length);
+
+  uchar note_[PHRASE_COUNT * MAX_STEPS_PER_PHRASE];
+  uchar instr_[PHRASE_COUNT * MAX_STEPS_PER_PHRASE];
+  FourCC cmd1_[PHRASE_COUNT * MAX_STEPS_PER_PHRASE];
+  ushort param1_[PHRASE_COUNT * MAX_STEPS_PER_PHRASE];
+  FourCC cmd2_[PHRASE_COUNT * MAX_STEPS_PER_PHRASE];
+  ushort param2_[PHRASE_COUNT * MAX_STEPS_PER_PHRASE];
+  uchar length_[PHRASE_COUNT];
 
 private:
   bool isUsed_[PHRASE_COUNT];

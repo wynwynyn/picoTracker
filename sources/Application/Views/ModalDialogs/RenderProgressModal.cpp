@@ -254,6 +254,34 @@ int RenderProgressModal::getChainPhraseCount(int songRow, int channel) const {
   return phraseCount;
 }
 
+int RenderProgressModal::getChainStepCount(int songRow, int channel) const {
+  if (viewData_ == nullptr || viewData_->song_ == nullptr) {
+    return 0;
+  }
+  if (songRow < 0 || songRow >= SONG_ROW_COUNT || channel < 0 ||
+      channel >= SONG_CHANNEL_COUNT) {
+    return 0;
+  }
+
+  const Song *song = viewData_->song_;
+  const unsigned char chain =
+      song->data_[songRow * SONG_CHANNEL_COUNT + channel];
+  if (chain == EMPTY_SONG_VALUE) {
+    return 0;
+  }
+
+  int totalSteps = 0;
+  for (int i = 0; i < PHRASES_PER_CHAIN; i++) {
+    const unsigned char phraseId =
+        song->chain_.data_[chain * PHRASES_PER_CHAIN + i];
+    if (phraseId == EMPTY_SONG_VALUE) {
+      break;
+    }
+    totalSteps += song->phrase_.GetLength(phraseId);
+  }
+  return totalSteps;
+}
+
 int RenderProgressModal::calculateChannelTotalRenderUnits(
     int channel, int startSongRow) const {
   if (startSongRow < 0 || startSongRow >= SONG_ROW_COUNT) {
@@ -266,7 +294,7 @@ int RenderProgressModal::calculateChannelTotalRenderUnits(
     if (phraseCount <= 0) {
       break;
     }
-    totalUnits += phraseCount * STEPS_PER_PHRASE;
+    totalUnits += getChainStepCount(row, channel);
 
     if (row + 1 >= SONG_ROW_COUNT ||
         getChainPhraseCount(row + 1, channel) <= 0) {
@@ -299,7 +327,7 @@ int RenderProgressModal::calculateChannelRenderedUnits(int channel,
     if (phraseCount <= 0) {
       return renderedUnits;
     }
-    renderedUnits += phraseCount * STEPS_PER_PHRASE;
+    renderedUnits += getChainStepCount(row, channel);
   }
 
   if (currentSongRow >= SONG_ROW_COUNT) {
@@ -318,14 +346,30 @@ int RenderProgressModal::calculateChannelRenderedUnits(int channel,
     chainPos = currentPhraseCount - 1;
   }
 
+  const Song *song = viewData_->song_;
+  const unsigned char chain =
+      song->data_[currentSongRow * SONG_CHANNEL_COUNT + channel];
+  int stepsBeforeCurrentPhrase = 0;
+  for (int i = 0; i < chainPos; i++) {
+    const unsigned char phraseId =
+        song->chain_.data_[chain * PHRASES_PER_CHAIN + i];
+    if (phraseId != EMPTY_SONG_VALUE) {
+      stepsBeforeCurrentPhrase += song->phrase_.GetLength(phraseId);
+    }
+  }
+
+  const unsigned char currentPhraseId =
+      song->chain_.data_[chain * PHRASES_PER_CHAIN + chainPos];
+  int currentPhraseLength = song->phrase_.GetLength(currentPhraseId);
+
   int phrasePos = viewData_->phrasePlayPos_[channel];
   if (phrasePos < 0) {
     phrasePos = 0;
-  } else if (phrasePos >= STEPS_PER_PHRASE) {
-    phrasePos = STEPS_PER_PHRASE - 1;
+  } else if (phrasePos >= currentPhraseLength) {
+    phrasePos = currentPhraseLength - 1;
   }
 
-  renderedUnits += chainPos * STEPS_PER_PHRASE + phrasePos;
+  renderedUnits += stepsBeforeCurrentPhrase + phrasePos;
   if (renderedUnits > totalRenderUnits_) {
     renderedUnits = totalRenderUnits_;
   }

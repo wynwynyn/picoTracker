@@ -54,6 +54,7 @@ private:
   int calculateSongRenderPercent() const;
   int getCurrentRenderedSongRow(bool *hasActive = nullptr) const;
   int getChainPhraseCount(int songRow, int channel) const;
+  int getChainStepCount(int songRow, int channel) const;
   int calculateChannelTotalRenderUnits(int channel, int startSongRow) const;
   int calculateChannelRenderedUnits(int channel, int startSongRow) const;
   void initializeSongProgressTracking();
