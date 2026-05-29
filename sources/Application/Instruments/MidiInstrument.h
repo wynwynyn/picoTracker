@@ -83,7 +83,12 @@ public:
 private:
   etl::list<Variable *, 7> variables_;
 
-  etl::array<uint8_t, MAX_MIDI_CHORD_NOTES + 1> lastNotes_[SONG_CHANNEL_COUNT];
+  // Padded to 8 bytes per channel so each `lastNotes_[c]` lands on a 4-byte
+  // aligned address. MidiInstrument lives in SDRAM (.INSTRUMENT_BANK section)
+  // on Advance, and that region is Device-typed by default on the Cortex-M7,
+  // so any compiler-generated unaligned word access would HardFault. See
+  // docs/midi-sdram-unaligned-access.md for the full write-up.
+  alignas(4) etl::array<uint8_t, 8> lastNotes_[SONG_CHANNEL_COUNT];
   int remainingTicks_;
   bool playing_;
   bool retrig_;
