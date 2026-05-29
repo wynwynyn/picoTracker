@@ -52,8 +52,13 @@ public:
   virtual void RestoreContent(PersistencyDocument *doc);
 
 private:
+  Table *tables();
+  bool *allocations();
+
+#ifndef ADV
   Table table_[TABLE_COUNT];
   bool allocation_[TABLE_COUNT];
+#endif
 };
 
 #endif
