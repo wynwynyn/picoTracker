@@ -63,14 +63,34 @@ void PhraseSettingsView::ProcessButtonMask(unsigned short mask, bool pressed) {
     if (mask & EPBM_UP) {
       updateLength(1);
     }
+    if (mask == EPBM_ENTER) {
+      lengthFocused_ = !lengthFocused_;
+      isDirty_ = true;
+    }
+    return;
+  }
+
+  if (lengthFocused_) {
+    if (mask & EPBM_DOWN) {
+      updateLength(-1);
+    }
+    if (mask & EPBM_UP) {
+      updateLength(1);
+    }
     return;
   }
 
   if (mask & EPBM_DOWN) {
-    updateLength(-1);
+    ViewType vt = VT_PHRASE;
+    ViewEvent ve(VET_SWITCH_VIEW, &vt);
+    SetChanged();
+    NotifyObservers(&ve);
   }
   if (mask & EPBM_UP) {
-    updateLength(1);
+    ViewType vt = VT_GROOVE;
+    ViewEvent ve(VET_SWITCH_VIEW, &vt);
+    SetChanged();
+    NotifyObservers(&ve);
   }
 }
 
