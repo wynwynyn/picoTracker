@@ -81,12 +81,12 @@ private:
     int offset_;
     int width_;
     int height_;
-    uchar note_[16];
-    uchar instr_[16];
-    uchar cmd1_[16];
-    ushort param1_[16];
-    uchar cmd2_[16];
-    ushort param2_[16];
+    uchar note_[MAX_STEPS_PER_PHRASE];
+    uchar instr_[MAX_STEPS_PER_PHRASE];
+    FourCC cmd1_[MAX_STEPS_PER_PHRASE];
+    ushort param1_[MAX_STEPS_PER_PHRASE];
+    FourCC cmd2_[MAX_STEPS_PER_PHRASE];
+    ushort param2_[MAX_STEPS_PER_PHRASE];
   } clipboard_;
 
   int saveCol_;
