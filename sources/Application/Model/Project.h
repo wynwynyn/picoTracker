@@ -25,7 +25,7 @@
 #include "ModelStorage.h"
 #endif
 
-#define PROJECT_NUMBER "2.3.1-experimental"
+#define PROJECT_NUMBER "2.3.1-wyn-1.0.0"
 #define PROJECT_RELEASE "r"
 // BUILD_COUNT define comes from BuildNumber.h
 
