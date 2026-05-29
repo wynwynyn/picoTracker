@@ -1,5 +1,6 @@
 add_library(platform_system
   advSystem.cpp
+  advModelStorage.cpp
   input.cpp
   critical_error_message.c
   advSamplePool.cpp
