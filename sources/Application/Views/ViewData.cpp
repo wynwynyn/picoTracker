@@ -28,6 +28,7 @@ void ViewData::Load(Project *project) {
   currentInstrumentID_ = 0;
   currentGroove_ = 0;
   playMode_ = PM_SONG;
+  phraseOffset_ = 0;
   phraseCurPos_ = 0;
 
   for (int i = 0; i < SONG_CHANNEL_COUNT; i++) {
@@ -135,3 +136,49 @@ void ViewData::SetChainPhrase(unsigned char value) {
 unsigned char *ViewData::GetCurrentChainPointer() {
   return song_->chain_.data_ + (16 * currentChain_ + chainRow_);
 };
+
+void ViewData::UpdatePhraseOffset(int offset) {
+  phraseOffset_ += offset;
+  int visibleRow = phraseCurPos_ - phraseOffset_;
+  checkPhraseBoundaries(visibleRow);
+  phraseCurPos_ = phraseOffset_ + visibleRow;
+}
+
+void ViewData::UpdatePhraseRow(int &visibleRow, int dy) {
+  visibleRow += dy;
+  checkPhraseBoundaries(visibleRow);
+  phraseCurPos_ = phraseOffset_ + visibleRow;
+}
+
+int ViewData::GetAbsolutePhraseStep(int visibleRow) const {
+  return phraseOffset_ + visibleRow;
+}
+
+void ViewData::checkPhraseBoundaries(int &visibleRow) {
+  const int visibleRows = View::songRowCount_;
+  const int len = song_->phrase_.GetLength(currentPhrase_);
+
+  if (visibleRow < 0) {
+    phraseOffset_ += visibleRow;
+    visibleRow = 0;
+  }
+  if (visibleRow > visibleRows - 1) {
+    phraseOffset_ += visibleRow - visibleRows + 1;
+    visibleRow = visibleRows - 1;
+  }
+
+  const int maxOffset = len - visibleRows;
+  if (phraseOffset_ > maxOffset) {
+    phraseOffset_ = maxOffset;
+  }
+  if (phraseOffset_ < 0) {
+    phraseOffset_ = 0;
+  }
+
+  if (visibleRow >= len - phraseOffset_) {
+    visibleRow = len - phraseOffset_ - 1;
+  }
+  if (visibleRow < 0) {
+    visibleRow = 0;
+  }
+}
