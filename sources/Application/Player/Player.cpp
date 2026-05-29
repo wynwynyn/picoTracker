@@ -680,15 +680,15 @@ void Player::ProcessCommands() {
       if (phrase != 0xFF) {
         if (gs->TriggerChannel(i)) { // If groove says it is time to play
           int pos = viewData_->phrasePlayPos_[i];
-          int phraseOffset = phrase * 16 + pos;
-          uchar phraseInstr = viewData_->song_->phrase_.instr_[phraseOffset];
+          int stepIndex = Phrase::GetStepOffset(phrase, pos);
+          uchar phraseInstr = viewData_->song_->phrase_.instr_[stepIndex];
 
-          FourCC cc = viewData_->song_->phrase_.cmd1_[phraseOffset];
-          ushort param = viewData_->song_->phrase_.param1_[phraseOffset];
+          FourCC cc = viewData_->song_->phrase_.cmd1_[stepIndex];
+          ushort param = viewData_->song_->phrase_.param1_[stepIndex];
           ProcessPhraseCommand(i, cc, param, phraseInstr);
 
-          cc = viewData_->song_->phrase_.cmd2_[phraseOffset];
-          param = viewData_->song_->phrase_.param2_[phraseOffset];
+          cc = viewData_->song_->phrase_.cmd2_[stepIndex];
+          param = viewData_->song_->phrase_.param2_[stepIndex];
           ProcessPhraseCommand(i, cc, param, phraseInstr);
         }
       }
@@ -822,15 +822,16 @@ void Player::updatePhrasePos(int pos, int channel) {
 
   // Check both param colum 1 & 2
 
-  FourCC cc = viewData_->song_->phrase_.cmd1_[phrase * 16 + pos];
+  int stepIndex = Phrase::GetStepOffset(phrase, pos);
+  FourCC cc = viewData_->song_->phrase_.cmd1_[stepIndex];
   if (cc == FourCC::InstrumentCommandDelay) {
-    ushort param = viewData_->song_->phrase_.param1_[phrase * 16 + pos];
+    ushort param = viewData_->song_->phrase_.param1_[stepIndex];
     timeToStart_[channel] = (param & 0x0F) + 1;
   }
 
-  cc = viewData_->song_->phrase_.cmd2_[phrase * 16 + pos];
+  cc = viewData_->song_->phrase_.cmd2_[stepIndex];
   if (cc == FourCC::InstrumentCommandDelay) {
-    ushort param = viewData_->song_->phrase_.param2_[phrase * 16 + pos];
+    ushort param = viewData_->song_->phrase_.param2_[stepIndex];
     timeToStart_[channel] = (param & 0x0F) + 1;
   }
 }
@@ -846,8 +847,9 @@ void Player::playCursorPosition(int channel) {
 
     Song *song = viewData_->song_;
     Phrase *phrase = &(song->phrase_);
-    unsigned char note = phrase->note_[16 * currentPhrase + pos];
-    unsigned char instr = phrase->instr_[16 * currentPhrase + pos];
+    int stepIndex = Phrase::GetStepOffset(currentPhrase, pos);
+    unsigned char note = phrase->note_[stepIndex];
+    unsigned char instr = phrase->instr_[stepIndex];
 
     TableHolder *th = TableHolder::GetInstance();
     TablePlayback &tpb = TablePlayback::GetTablePlayback(channel);
@@ -956,13 +958,14 @@ void Player::playCursorPosition(int channel) {
 int Player::getChannelHop(int channel, int pos) {
 
   int phrase = viewData_->currentPlayPhrase_[channel];
-  FourCC cc = viewData_->song_->phrase_.cmd1_[phrase * 16 + pos];
+  int stepIndex = Phrase::GetStepOffset(phrase, pos);
+  FourCC cc = viewData_->song_->phrase_.cmd1_[stepIndex];
   if (cc == FourCC::InstrumentCommandHop) {
-    return (viewData_->song_->phrase_.param1_[phrase * 16 + pos]) & 0xF;
+    return (viewData_->song_->phrase_.param1_[stepIndex]) & 0xF;
   }
-  cc = viewData_->song_->phrase_.cmd2_[phrase * 16 + pos];
+  cc = viewData_->song_->phrase_.cmd2_[stepIndex];
   if (cc == FourCC::InstrumentCommandHop) {
-    return (viewData_->song_->phrase_.param2_[phrase * 16 + pos]) & 0xF;
+    return (viewData_->song_->phrase_.param2_[stepIndex]) & 0xF;
   }
   return -1;
 }
@@ -1007,7 +1010,9 @@ void Player::moveToNextStep() {
       if (gs->TriggerChannel(i)) { // If groove says it is time to play
         if (viewData_->currentPlayPhrase_[i] != 0xFF) {
           int pos = (viewData_->phrasePlayPos_[i]) + 1;
-          if (pos != 16) {
+          uchar playPhrase = viewData_->currentPlayPhrase_[i];
+          int phraseLength = viewData_->song_->phrase_.GetLength(playPhrase);
+          if (pos < phraseLength) {
             int hop = getChannelHop(i, pos);
             if (hop >= 0) {
               if (mode_ != PM_PHRASE) {
