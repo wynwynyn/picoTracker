@@ -36,6 +36,7 @@ public:
   void UpdatePhraseOffset(int offset);
   void UpdatePhraseRow(int &visibleRow, int dy);
   int GetAbsolutePhraseStep(int visibleRow) const;
+  void ClampPhraseEditorCursor();
 
 protected:
   void checkSongBoundaries();
