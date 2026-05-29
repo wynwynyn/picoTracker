@@ -10,6 +10,7 @@
 #ifndef _PHRASE_VIEW_H_
 #define _PHRASE_VIEW_H_
 
+#include "Application/Model/Phrase.h"
 #include "BaseClasses/UIBigHexVarField.h"
 #include "ScreenView.h"
 #include "ViewData.h"
@@ -55,6 +56,9 @@ protected:
 
   void setTextProps(GUITextProperties &props, int row, int col, bool restore);
   bool getEffectiveInstrumentForRow(int row, uint8_t &instrumentId) const;
+  int phraseStepIndex(int absoluteStep) const;
+  void syncRowFromCursor();
+  void updateCmdEditField();
 
 private:
   int row_;
@@ -74,18 +78,20 @@ private:
     bool active_;
     int col_;
     int row_;
+    int offset_;
     int width_;
     int height_;
-    uchar note_[16];
-    uchar instr_[16];
-    uchar cmd1_[16];
-    ushort param1_[16];
-    uchar cmd2_[16];
-    ushort param2_[16];
+    uchar note_[MAX_STEPS_PER_PHRASE];
+    uchar instr_[MAX_STEPS_PER_PHRASE];
+    FourCC cmd1_[MAX_STEPS_PER_PHRASE];
+    ushort param1_[MAX_STEPS_PER_PHRASE];
+    FourCC cmd2_[MAX_STEPS_PER_PHRASE];
+    ushort param2_[MAX_STEPS_PER_PHRASE];
   } clipboard_;
 
   int saveCol_;
   int saveRow_;
+  int savePhraseOffset_;
 
   static short offsets_[2][4];
 

@@ -47,7 +47,8 @@ void Song::SaveContent(tinyxml2::XMLPrinter *printer) {
   saveHexBuffer(printer, "COMMAND2", phrase_.cmd2_,
                 PHRASE_COUNT * STEPS_PER_PHRASE);
   saveHexBuffer(printer, "PARAM2", phrase_.param2_,
-                PHRASE_COUNT * STEPS_PER_PHRASE);
+                PHRASE_COUNT * MAX_STEPS_PER_PHRASE);
+  saveHexBuffer(printer, "PHRASE_LENGTHS", phrase_.length_, PHRASE_COUNT);
 };
 
 void Song::RestoreContent(PersistencyDocument *doc) {
@@ -80,6 +81,9 @@ void Song::RestoreContent(PersistencyDocument *doc) {
     };
     if (!strcmp("PARAM2", doc->ElemName())) {
       restoreHexBuffer(doc, (uchar *)phrase_.param2_);
+    };
+    if (!strcmp("PHRASE_LENGTHS", doc->ElemName())) {
+      restoreHexBuffer(doc, phrase_.length_);
     };
     elem = doc->NextSibling();
   }
@@ -121,7 +125,7 @@ void Song::RestoreContent(PersistencyDocument *doc) {
   TableHolder *th = TableHolder::GetInstance();
 
   for (int i = 0; i < PHRASE_COUNT; i++) {
-    for (int j = 0; j < STEPS_PER_PHRASE; j++) {
+    for (int j = 0; j < MAX_STEPS_PER_PHRASE; j++) {
       if (*data != 0xFF) {
         phrase_.SetUsed(i);
       }

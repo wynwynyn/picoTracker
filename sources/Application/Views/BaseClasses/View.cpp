@@ -125,6 +125,11 @@ void View::drawMap() {
     pos._y += 2;
     DrawString(pos._x, pos._y, "P", props);
     break;
+  case VT_PHRASE_SETTINGS:
+    pos._x += 3;
+    pos._y += 1;
+    DrawString(pos._x, pos._y, "L", props);
+    break;
   case VT_DEVICE:
     DrawString(pos._x, pos._y, "D", props);
     break;

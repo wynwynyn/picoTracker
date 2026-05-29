@@ -128,7 +128,7 @@ void GrooveView::ProcessButtonMask(unsigned short mask, bool pressed) {
   } else if (mask & EPBM_NAV) {
     // NAV Modifier
     if (mask & EPBM_DOWN) {
-      ViewType vt = VT_PHRASE;
+      ViewType vt = VT_PHRASE_SETTINGS;
       ViewEvent ve(VET_SWITCH_VIEW, &vt);
       SetChanged();
       NotifyObservers(&ve);
@@ -236,4 +236,4 @@ void GrooveView::OnPlayerUpdate(PlayerEventType, unsigned int tick) {
   drawNotes();
 };
 
-void GrooveView::OnFocus(){};
+void GrooveView::OnFocus() {}

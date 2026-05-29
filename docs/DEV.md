@@ -61,11 +61,19 @@ To create a debug build, you have to replace the ```cmake``` step on the previou
 
 ## Build for the Advance
 
-To build using CMake the debug build for Adv target: 
+Advance is the default CMake target (`ADV` defaults to `true`). To build a debug
+Advance binary:
+
 ```bash
 cd build
-cmake -DCMAKE_BUILD_TYPE=Debug -DADV=true ../sources
+cmake -DCMAKE_BUILD_TYPE=Debug ../sources
 make -j8
+```
+
+To build for the RP2040 picoTracker instead, pass `-DADV=false`:
+
+```bash
+cmake -DCMAKE_BUILD_TYPE=Debug -DADV=false ../sources
 ```
 
 ## Testbench for development
