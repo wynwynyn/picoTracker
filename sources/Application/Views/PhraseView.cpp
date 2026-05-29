@@ -47,7 +47,7 @@ PhraseView::PhraseView(GUIWindow &w, ViewData *viewData)
   clipboard_.width_ = 0;
   clipboard_.height_ = 0;
 
-  for (int i = 0; i < 16; i++) {
+  for (int i = 0; i < MAX_STEPS_PER_PHRASE; i++) {
     clipboard_.note_[i] = NO_NOTE;
     clipboard_.instr_[i] = 0;
   };
@@ -72,12 +72,12 @@ void PhraseView::Reset() {
   clipboard_.height_ = 0;
   clipboard_.col_ = 0;
   clipboard_.row_ = 0;
-  for (int i = 0; i < 16; i++) {
+  for (int i = 0; i < MAX_STEPS_PER_PHRASE; i++) {
     clipboard_.note_[i] = 0xFF;
     clipboard_.instr_[i] = 0;
-    clipboard_.cmd1_[i] = 0;
+    clipboard_.cmd1_[i] = FourCC::InstrumentCommandNone;
     clipboard_.param1_[i] = 0;
-    clipboard_.cmd2_[i] = 0;
+    clipboard_.cmd2_[i] = FourCC::InstrumentCommandNone;
     clipboard_.param2_[i] = 0;
   }
 
@@ -553,11 +553,9 @@ void PhraseView::fillClipboardData() {
         Phrase::GetStepOffset(viewData_->currentPhrase_, selRect.Top() + i);
     clipboard_.note_[i] = phrase.note_[idx];
     clipboard_.instr_[i] = phrase.instr_[idx];
-    clipboard_.cmd1_[i] =
-        *reinterpret_cast<const uchar *>(&phrase.cmd1_[idx]);
+    clipboard_.cmd1_[i] = phrase.cmd1_[idx];
     clipboard_.param1_[i] = phrase.param1_[idx];
-    clipboard_.cmd2_[i] =
-        *reinterpret_cast<const uchar *>(&phrase.cmd2_[idx]);
+    clipboard_.cmd2_[i] = phrase.cmd2_[idx];
     clipboard_.param2_[i] = phrase.param2_[idx];
   }
   updateCursor(0, 0);
@@ -726,13 +724,13 @@ void PhraseView::pasteClipboard() {
         phrase.instr_[idx] = clipboard_.instr_[j];
         break;
       case 2:
-        phrase.cmd1_[idx] = *reinterpret_cast<const FourCC *>(&clipboard_.cmd1_[j]);
+        phrase.cmd1_[idx] = clipboard_.cmd1_[j];
         break;
       case 3:
         phrase.param1_[idx] = clipboard_.param1_[j];
         break;
       case 4:
-        phrase.cmd2_[idx] = *reinterpret_cast<const FourCC *>(&clipboard_.cmd2_[j]);
+        phrase.cmd2_[idx] = clipboard_.cmd2_[j];
         break;
       case 5:
         phrase.param2_[idx] = clipboard_.param2_[j];
