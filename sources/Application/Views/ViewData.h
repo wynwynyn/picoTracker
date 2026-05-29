@@ -93,8 +93,8 @@ public:
                                               // channel
   int phrasePlayPos_[SONG_CHANNEL_COUNT]; // .Play position in phrase for each
                                           // channel
-  int phraseOffset_; // top visible step in phrase editor
-  int phraseCurPos_; // absolute phrase step under cursor
+  int phraseOffset_;                      // top visible step in phrase editor
+  int phraseCurPos_;                      // absolute phrase step under cursor
 
   // Sample Editor
   etl::string<MAX_INSTRUMENT_FILENAME_LENGTH> sampleEditorFilename;

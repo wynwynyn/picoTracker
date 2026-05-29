@@ -8,9 +8,9 @@
  */
 
 #include "PhraseView.h"
-#include "Application/Model/Phrase.h"
 #include "Application/Instruments/CommandList.h"
 #include "Application/Instruments/SampleInstrument.h"
+#include "Application/Model/Phrase.h"
 #include "Application/Model/Scale.h"
 #include "Application/Model/Table.h"
 #include "Application/Utils/HelpLegend.h"
@@ -243,13 +243,13 @@ void PhraseView::updateCursorValue(ViewUpdateDirection direction, int xOffset,
       break;
     }
     // Sanitize MIDI velocity values if needed
-    FourCC currentCmd =
-        *(phrase_->cmd1_ + (phraseStepIndex(viewData_->phraseCurPos_ + yOffset)));
+    FourCC currentCmd = *(
+        phrase_->cmd1_ + (phraseStepIndex(viewData_->phraseCurPos_ + yOffset)));
     ushort paramValue = cmdEdit_.GetInt();
     paramValue = CommandList::RangeLimitCommandParam(currentCmd, paramValue);
     cmdEdit_.SetInt(paramValue);
-    *(phrase_->param1_ + (phraseStepIndex(viewData_->phraseCurPos_ + yOffset))) =
-        paramValue;
+    *(phrase_->param1_ +
+      (phraseStepIndex(viewData_->phraseCurPos_ + yOffset))) = paramValue;
     lastParam_ = paramValue;
     break;
   }
@@ -287,13 +287,13 @@ void PhraseView::updateCursorValue(ViewUpdateDirection direction, int xOffset,
       break;
     }
     // Sanitize MIDI velocity values if needed
-    FourCC currentCmd =
-        *(phrase_->cmd2_ + (phraseStepIndex(viewData_->phraseCurPos_ + yOffset)));
+    FourCC currentCmd = *(
+        phrase_->cmd2_ + (phraseStepIndex(viewData_->phraseCurPos_ + yOffset)));
     ushort paramValue = cmdEdit_.GetInt();
     paramValue = CommandList::RangeLimitCommandParam(currentCmd, paramValue);
     cmdEdit_.SetInt(paramValue);
-    *(phrase_->param2_ + (phraseStepIndex(viewData_->phraseCurPos_ + yOffset))) =
-        paramValue;
+    *(phrase_->param2_ +
+      (phraseStepIndex(viewData_->phraseCurPos_ + yOffset))) = paramValue;
     lastParam_ = paramValue;
     break;
   }
@@ -311,9 +311,8 @@ void PhraseView::updateCursorValue(ViewUpdateDirection direction, int xOffset,
       uint8_t instrId = 0;
       InstrumentBank *bank = viewData_->project_->GetInstrumentBank();
       SampleInstrument *sliceInstr = nullptr;
-      if (bank &&
-          getEffectiveInstrumentForRow(viewData_->phraseCurPos_ + yOffset,
-                                       instrId)) {
+      if (bank && getEffectiveInstrumentForRow(
+                      viewData_->phraseCurPos_ + yOffset, instrId)) {
         I_Instrument *instr = bank->GetInstrument(instrId);
         if (instr && instr->GetType() == IT_SAMPLE) {
           sliceInstr = static_cast<SampleInstrument *>(instr);
@@ -1029,7 +1028,8 @@ void PhraseView::processNormalButtonMask(unsigned short mask) {
 
       ViewType vt = VT_TABLE;
 
-      FourCC *cmd = phrase_->cmd1_ + (phraseStepIndex(viewData_->phraseCurPos_));
+      FourCC *cmd =
+          phrase_->cmd1_ + (phraseStepIndex(viewData_->phraseCurPos_));
       ushort *param =
           phrase_->param1_ + (phraseStepIndex(viewData_->phraseCurPos_));
 
@@ -1252,7 +1252,8 @@ void PhraseView::DrawView() {
     unsigned char effectiveInstr = lastInstr;
     setTextProps(props, 0, j, false);
     const int absStep = viewData_->phraseOffset_ + j;
-    (0 == absStep % ALT_ROW_NUMBER) ? SetColor(CD_HILITE1) : SetColor(CD_NORMAL);
+    (0 == absStep % ALT_ROW_NUMBER) ? SetColor(CD_HILITE1)
+                                    : SetColor(CD_NORMAL);
     if (d == NO_NOTE) {
       DrawString(pos._x, pos._y, "----", props);
     } else if (d == NOTE_OFF) {

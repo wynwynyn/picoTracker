@@ -117,14 +117,14 @@ struct AppWindowViews {
   AppWindowViews(GUIWindow &w, ViewData &viewData)
       : songView(w, &viewData), chainView(w, &viewData),
         phraseView(w, &viewData), phraseSettingsView(w, &viewData),
-        deviceView(w, &viewData),
-        themeView(w, &viewData), themeImportView(w, &viewData),
-        projectView(w, &viewData), importView(w, &viewData),
-        instrumentImportView(w, &viewData), instrumentView(w, &viewData),
-        tableView(w, &viewData), grooveView(w, &viewData),
-        selectProjectView(w, &viewData), mixerView(w, &viewData),
-        sampleEditorView(w, &viewData), sampleSlicesView(w, &viewData),
-        recordView(w, &viewData), nullView(w, &viewData) {}
+        deviceView(w, &viewData), themeView(w, &viewData),
+        themeImportView(w, &viewData), projectView(w, &viewData),
+        importView(w, &viewData), instrumentImportView(w, &viewData),
+        instrumentView(w, &viewData), tableView(w, &viewData),
+        grooveView(w, &viewData), selectProjectView(w, &viewData),
+        mixerView(w, &viewData), sampleEditorView(w, &viewData),
+        sampleSlicesView(w, &viewData), recordView(w, &viewData),
+        nullView(w, &viewData) {}
 };
 
 void AppWindow::defineColor(FourCC colorCode, GUIColor &color,
@@ -805,7 +805,7 @@ void AppWindow::AnimationUpdate() {
   }
 }
 
-void AppWindow::LayoutChildren(){};
+void AppWindow::LayoutChildren() {};
 
 void AppWindow::Update(Observable &o, I_ObservableData *d) {
   if (d && (uintptr_t)d == (uintptr_t)FourCC::VarProjectName) {
