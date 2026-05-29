@@ -8,6 +8,7 @@
  */
 
 #include "PhraseView.h"
+#include "Application/Model/Phrase.h"
 #include "Application/Instruments/CommandList.h"
 #include "Application/Instruments/SampleInstrument.h"
 #include "Application/Model/Scale.h"
@@ -34,6 +35,7 @@ PhraseView::PhraseView(GUIWindow &w, ViewData *viewData)
   phrase_ = &(viewData_->song_->phrase_);
   lastPlayingPos_ = 0;
   row_ = 0;
+  viewData->phraseOffset_ = 0;
   viewData->phraseCurPos_ = 0;
   col_ = 0;
   lastNote_ = NOTE_C3;
@@ -62,6 +64,7 @@ void PhraseView::Reset() {
   lastInstr_ = 0;
   lastCmd_ = FourCC::InstrumentCommandNone;
   lastParam_ = 0;
+  viewData_->phraseOffset_ = 0;
   viewData_->phraseCurPos_ = 0;
 
   clipboard_.active_ = false;
@@ -92,8 +95,10 @@ bool PhraseView::getEffectiveInstrumentForRow(int row,
   if (row < 0) {
     return false;
   }
-  unsigned char *instrData = phrase_->instr_ + (16 * viewData_->currentPhrase_);
-  for (int i = row; i >= 0; --i) {
+  const int absStep = viewData_->phraseOffset_ + row;
+  const int base = Phrase::GetStepOffset(viewData_->currentPhrase_, 0);
+  unsigned char *instrData = phrase_->instr_ + base;
+  for (int i = absStep; i >= 0; --i) {
     unsigned char instr = instrData[i];
     if (instr != 0xFF) {
       instrumentId = instr;
@@ -103,69 +108,82 @@ bool PhraseView::getEffectiveInstrumentForRow(int row,
   return false;
 }
 
-void PhraseView::updateCursor(int dx, int dy) {
+int PhraseView::phraseStepIndex(int absoluteStep) const {
+  return Phrase::GetStepOffset(viewData_->currentPhrase_, absoluteStep);
+}
 
-  col_ += dx;
-  row_ += dy;
-  if (col_ > 5)
-    col_ = 5;
-  if (col_ < 0)
-    col_ = 0;
-  if (row_ > 15) {
-    // Try to see if the current chain has a phrase after this one
+void PhraseView::syncRowFromCursor() {
+  row_ = viewData_->phraseCurPos_ - viewData_->phraseOffset_;
+}
 
-    if ((viewMode_ != VM_SELECTION) && (viewData_->chainRow_ < 15)) {
-      viewData_->chainRow_++;
-      unsigned char *p = viewData_->GetCurrentChainPointer();
-      if (*p != 0xFF) {
-        viewData_->currentPhrase_ = *p;
-        row_ = 0;
-      } else { // rollback
-        viewData_->chainRow_--;
-        row_ = 15;
-      }
-    } else {
-      row_ = 15;
-    }
-  }
-  if (row_ < 0) {
-
-    // Try to see if the current chain has a phrase before this one
-
-    if ((viewMode_ != VM_SELECTION) && (viewData_->chainRow_ > 0)) {
-      viewData_->chainRow_--;
-      unsigned char *p = viewData_->GetCurrentChainPointer();
-      if (*p != 0xFF) {
-        viewData_->currentPhrase_ = *p;
-        row_ = 15;
-      } else { // rollback
-        viewData_->chainRow_++;
-        row_ = 0;
-      }
-    } else {
-      row_ = 0;
-    }
-  }
+void PhraseView::updateCmdEditField() {
   GUIPoint anchor = GetAnchor();
   GUIPoint p(anchor);
+  const int idx = phraseStepIndex(viewData_->phraseCurPos_);
   switch (col_) {
   case 3:
     p._x += 12;
     p._y += row_;
     cmdEditField_.SetPosition(p);
-    cmdEdit_.SetInt(
-        *(phrase_->param1_ + (16 * viewData_->currentPhrase_ + row_)));
+    cmdEdit_.SetInt(*(phrase_->param1_ + idx));
     break;
   case 5:
     p._x += 21;
     p._y += row_;
     cmdEditField_.SetPosition(p);
-    cmdEdit_.SetInt(
-        *(phrase_->param2_ + (16 * viewData_->currentPhrase_ + row_)));
+    cmdEdit_.SetInt(*(phrase_->param2_ + idx));
     break;
-  };
+  default:
+    break;
+  }
+}
 
-  viewData_->phraseCurPos_ = row_;
+void PhraseView::updateCursor(int dx, int dy) {
+
+  col_ += dx;
+  if (col_ > 5)
+    col_ = 5;
+  if (col_ < 0)
+    col_ = 0;
+
+  if (dy != 0) {
+    const int len = phrase_->GetLength(viewData_->currentPhrase_);
+    const bool atEnd = viewData_->phraseCurPos_ >= len - 1;
+    const bool atStart = viewData_->phraseCurPos_ <= 0;
+
+    if (dy > 0 && atEnd && (viewMode_ != VM_SELECTION) &&
+        (viewData_->chainRow_ < 15)) {
+      viewData_->chainRow_++;
+      unsigned char *p = viewData_->GetCurrentChainPointer();
+      if (*p != 0xFF) {
+        viewData_->currentPhrase_ = *p;
+        viewData_->phraseOffset_ = 0;
+        viewData_->phraseCurPos_ = 0;
+        row_ = 0;
+      } else {
+        viewData_->chainRow_--;
+      }
+    } else if (dy < 0 && atStart && (viewMode_ != VM_SELECTION) &&
+               (viewData_->chainRow_ > 0)) {
+      viewData_->chainRow_--;
+      unsigned char *p = viewData_->GetCurrentChainPointer();
+      if (*p != 0xFF) {
+        viewData_->currentPhrase_ = *p;
+        const int newLen = phrase_->GetLength(viewData_->currentPhrase_);
+        viewData_->phraseCurPos_ = newLen - 1;
+        viewData_->phraseOffset_ =
+            (newLen > View::songRowCount_) ? newLen - View::songRowCount_ : 0;
+        row_ = viewData_->phraseCurPos_ - viewData_->phraseOffset_;
+      } else {
+        viewData_->chainRow_++;
+      }
+    } else {
+      viewData_->UpdatePhraseRow(row_, dy);
+      viewData_->phraseCurPos_ = viewData_->phraseOffset_ + row_;
+    }
+  }
+
+  updateCmdEditField();
   isDirty_ = true;
 }
 
@@ -179,17 +197,17 @@ void PhraseView::updateCursorValue(ViewUpdateDirection direction, int xOffset,
 
   switch (col_ + xOffset) {
   case 0:
-    c = phrase_->note_ + (16 * viewData_->currentPhrase_ + row_ + yOffset);
+    c = phrase_->note_ + (phraseStepIndex(viewData_->phraseCurPos_ + yOffset));
     limit = HIGHEST_NOTE;
     wrap = true;
     break;
   case 1:
-    c = phrase_->instr_ + (16 * viewData_->currentPhrase_ + row_ + yOffset);
+    c = phrase_->instr_ + (phraseStepIndex(viewData_->phraseCurPos_ + yOffset));
     limit = MAX_INSTRUMENT_COUNT - 1;
     wrap = true;
     break;
   case 2:
-    cc = phrase_->cmd1_ + (16 * viewData_->currentPhrase_ + row_ + yOffset);
+    cc = phrase_->cmd1_ + (phraseStepIndex(viewData_->phraseCurPos_ + yOffset));
     switch (direction) {
     case VUD_RIGHT:
       *cc = CommandList::GetNext(*cc);
@@ -224,17 +242,17 @@ void PhraseView::updateCursorValue(ViewUpdateDirection direction, int xOffset,
     }
     // Sanitize MIDI velocity values if needed
     FourCC currentCmd =
-        *(phrase_->cmd1_ + (16 * viewData_->currentPhrase_ + row_ + yOffset));
+        *(phrase_->cmd1_ + (phraseStepIndex(viewData_->phraseCurPos_ + yOffset)));
     ushort paramValue = cmdEdit_.GetInt();
     paramValue = CommandList::RangeLimitCommandParam(currentCmd, paramValue);
     cmdEdit_.SetInt(paramValue);
-    *(phrase_->param1_ + (16 * viewData_->currentPhrase_ + row_ + yOffset)) =
+    *(phrase_->param1_ + (phraseStepIndex(viewData_->phraseCurPos_ + yOffset))) =
         paramValue;
     lastParam_ = paramValue;
     break;
   }
   case 4:
-    cc = phrase_->cmd2_ + (16 * viewData_->currentPhrase_ + row_ + yOffset);
+    cc = phrase_->cmd2_ + (phraseStepIndex(viewData_->phraseCurPos_ + yOffset));
     switch (direction) {
     case VUD_RIGHT:
       *cc = CommandList::GetNext(*cc);
@@ -268,11 +286,11 @@ void PhraseView::updateCursorValue(ViewUpdateDirection direction, int xOffset,
     }
     // Sanitize MIDI velocity values if needed
     FourCC currentCmd =
-        *(phrase_->cmd2_ + (16 * viewData_->currentPhrase_ + row_ + yOffset));
+        *(phrase_->cmd2_ + (phraseStepIndex(viewData_->phraseCurPos_ + yOffset)));
     ushort paramValue = cmdEdit_.GetInt();
     paramValue = CommandList::RangeLimitCommandParam(currentCmd, paramValue);
     cmdEdit_.SetInt(paramValue);
-    *(phrase_->param2_ + (16 * viewData_->currentPhrase_ + row_ + yOffset)) =
+    *(phrase_->param2_ + (phraseStepIndex(viewData_->phraseCurPos_ + yOffset))) =
         paramValue;
     lastParam_ = paramValue;
     break;
@@ -291,7 +309,9 @@ void PhraseView::updateCursorValue(ViewUpdateDirection direction, int xOffset,
       uint8_t instrId = 0;
       InstrumentBank *bank = viewData_->project_->GetInstrumentBank();
       SampleInstrument *sliceInstr = nullptr;
-      if (bank && getEffectiveInstrumentForRow(row_ + yOffset, instrId)) {
+      if (bank &&
+          getEffectiveInstrumentForRow(viewData_->phraseCurPos_ + yOffset,
+                                       instrId)) {
         I_Instrument *instr = bank->GetInstrument(instrId);
         if (instr && instr->GetType() == IT_SAMPLE) {
           sliceInstr = static_cast<SampleInstrument *>(instr);
@@ -354,20 +374,20 @@ void PhraseView::pasteLast() {
 
   switch (col_) {
   case 0:
-    c = phrase_->note_ + (16 * viewData_->currentPhrase_ + row_);
+    c = phrase_->note_ + (phraseStepIndex(viewData_->phraseCurPos_));
     if ((*c == NO_NOTE)) {
       *c = lastNote_;
-      c = phrase_->instr_ + (16 * viewData_->currentPhrase_ + row_);
+      c = phrase_->instr_ + (phraseStepIndex(viewData_->phraseCurPos_));
       *c = lastInstr_;
       isDirty_ = true;
     } else {
       lastNote_ = *c;
-      c = phrase_->instr_ + (16 * viewData_->currentPhrase_ + row_);
+      c = phrase_->instr_ + (phraseStepIndex(viewData_->phraseCurPos_));
       lastInstr_ = *c;
     }
     break;
   case 1:
-    c = phrase_->instr_ + (16 * viewData_->currentPhrase_ + row_);
+    c = phrase_->instr_ + (phraseStepIndex(viewData_->phraseCurPos_));
     if ((*c == 0xFF)) {
       *c = lastInstr_;
       isDirty_ = true;
@@ -377,7 +397,7 @@ void PhraseView::pasteLast() {
     break;
   case 2:
     c = (unsigned char *)phrase_->cmd1_ +
-        (16 * viewData_->currentPhrase_ + row_);
+        (phraseStepIndex(viewData_->phraseCurPos_));
     if (*c == FourCC::InstrumentCommandNone) {
       *c = lastCmd_;
       isDirty_ = true;
@@ -398,7 +418,7 @@ void PhraseView::pasteLast() {
 
   case 4:
     c = (unsigned char *)phrase_->cmd2_ +
-        (16 * viewData_->currentPhrase_ + row_);
+        (phraseStepIndex(viewData_->phraseCurPos_));
     if (*c == FourCC::InstrumentCommandNone) {
       *c = lastCmd_;
       isDirty_ = true;
@@ -421,7 +441,7 @@ void PhraseView::pasteLast() {
 
 void PhraseView::cutPosition() {
   // cutting an empty note slot adds a note off
-  uint8_t *note = phrase_->note_ + (16 * viewData_->currentPhrase_ + row_);
+  uint8_t *note = phrase_->note_ + (phraseStepIndex(viewData_->phraseCurPos_));
   if (col_ == 0 && *note == NO_NOTE) {
     *note = NOTE_OFF;
     isDirty_ = true;
@@ -448,16 +468,9 @@ void PhraseView::warpInChain(int offset) {
     unsigned char *p = viewData_->GetCurrentChainPointer();
     if (*p != 0xFF) {
       viewData_->currentPhrase_ = *p;
-      switch (col_) {
-      case 3:
-        cmdEdit_.SetInt(
-            *(phrase_->param1_ + (16 * viewData_->currentPhrase_ + row_)));
-        break;
-      case 5:
-        cmdEdit_.SetInt(
-            *(phrase_->param2_ + (16 * viewData_->currentPhrase_ + row_)));
-        break;
-      };
+      viewData_->ClampPhraseEditorCursor();
+      syncRowFromCursor();
+      updateCmdEditField();
     } else { // rollback
       viewData_->chainRow_ = currentRow;
     }
@@ -1474,7 +1487,12 @@ void PhraseView::AnimationUpdate() {
         if (player->IsChannelPlaying(i)) {
           if (viewData_->currentPlayPhrase_[i] == viewData_->currentPhrase_ &&
               viewData_->playMode_ != PM_AUDITION) {
-            pos._y = anchor._y + viewData_->phrasePlayPos_[i];
+            const int playRow =
+                viewData_->phrasePlayPos_[i] - viewData_->phraseOffset_;
+            if (playRow < 0 || playRow >= View::songRowCount_) {
+              break;
+            }
+            pos._y = anchor._y + playRow;
             if (!player->IsChannelMuted(i)) {
               SetColor(CD_ACCENT);
               DrawString(pos._x, pos._y, ">", props);
@@ -1483,7 +1501,7 @@ void PhraseView::AnimationUpdate() {
               DrawString(pos._x, pos._y, "-", props);
             }
             SetColor(CD_CURSOR);
-            lastPlayingPos_ = viewData_->phrasePlayPos_[i];
+            lastPlayingPos_ = playRow;
             break;
           }
         }

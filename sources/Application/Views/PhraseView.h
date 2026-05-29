@@ -10,6 +10,7 @@
 #ifndef _PHRASE_VIEW_H_
 #define _PHRASE_VIEW_H_
 
+#include "Application/Model/Phrase.h"
 #include "BaseClasses/UIBigHexVarField.h"
 #include "ScreenView.h"
 #include "ViewData.h"
@@ -55,6 +56,9 @@ protected:
 
   void setTextProps(GUITextProperties &props, int row, int col, bool restore);
   bool getEffectiveInstrumentForRow(int row, uint8_t &instrumentId) const;
+  int phraseStepIndex(int absoluteStep) const;
+  void syncRowFromCursor();
+  void updateCmdEditField();
 
 private:
   int row_;
