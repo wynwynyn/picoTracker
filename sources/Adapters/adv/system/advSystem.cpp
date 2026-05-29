@@ -14,6 +14,7 @@
 #include "Adapters/adv/system/advSamplePool.h"
 #include "Adapters/adv/timer/advTimer.h"
 #include "Application/Model/Config.h"
+#include "Application/Model/ModelStorage.h"
 #include "Application/Player/SyncMaster.h"
 #include "BatteryGauge.h"
 #include "charger.h"
@@ -44,6 +45,8 @@ int advSystem::MainLoop() {
 };
 
 void advSystem::Boot() {
+
+  ModelStorage_Init();
 
   // Start high resolution timer
   HAL_TIM_Base_Start(&htim2);
