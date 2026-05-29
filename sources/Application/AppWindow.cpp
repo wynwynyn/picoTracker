@@ -27,6 +27,7 @@
 #include "Application/Views/ModalDialogs/FullScreenBox.h"
 #include "Application/Views/ModalDialogs/MessageBox.h"
 #include "Application/Views/NullView.h"
+#include "Application/Views/PhraseSettingsView.h"
 #include "Application/Views/PhraseView.h"
 #include "Application/Views/ProjectView.h"
 #include "Application/Views/RecordView.h"
@@ -96,6 +97,7 @@ struct AppWindowViews {
   SongView songView;
   ChainView chainView;
   PhraseView phraseView;
+  PhraseSettingsView phraseSettingsView;
   DeviceView deviceView;
   ThemeView themeView;
   ThemeImportView themeImportView;
@@ -114,7 +116,8 @@ struct AppWindowViews {
 
   AppWindowViews(GUIWindow &w, ViewData &viewData)
       : songView(w, &viewData), chainView(w, &viewData),
-        phraseView(w, &viewData), deviceView(w, &viewData),
+        phraseView(w, &viewData), phraseSettingsView(w, &viewData),
+        deviceView(w, &viewData),
         themeView(w, &viewData), themeImportView(w, &viewData),
         projectView(w, &viewData), importView(w, &viewData),
         instrumentImportView(w, &viewData), instrumentView(w, &viewData),
@@ -489,6 +492,7 @@ AppWindow::LoadProjectResult AppWindow::LoadProject(const char *projectName) {
     views_->songView.Reset();
     views_->chainView.Reset();
     views_->phraseView.Reset();
+    views_->phraseSettingsView.Reset();
     views_->grooveView.Reset();
     views_->tableView.Reset();
     views_->projectView.Reset();
@@ -835,6 +839,9 @@ void AppWindow::Update(Observable &o, I_ObservableData *d) {
       break;
     case VT_PHRASE:
       _currentView = &views_->phraseView;
+      break;
+    case VT_PHRASE_SETTINGS:
+      _currentView = &views_->phraseSettingsView;
       break;
     case VT_DEVICE:
       _currentView = &views_->deviceView;
