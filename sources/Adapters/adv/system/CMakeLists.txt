@@ -1,6 +1,5 @@
 add_library(platform_system
   advSystem.cpp
-  advModelStorage.cpp
   input.cpp
   critical_error_message.c
   advSamplePool.cpp
@@ -8,6 +7,12 @@ add_library(platform_system
   syscalls.c
   charger.cpp
 )
+
+add_library(platform_model_storage OBJECT
+  advModelStorage.cpp
+)
+
+target_include_directories(platform_model_storage PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 target_link_libraries(platform_system PUBLIC
   uiframework_simplebaseclasses
@@ -25,3 +30,5 @@ target_link_libraries(platform_system PUBLIC
 target_include_directories(platform_system PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 include_directories(${PROJECT_SOURCE_DIR})
+
+target_sources(${CMAKE_PROJECT_NAME} PRIVATE $<TARGET_OBJECTS:platform_model_storage>)

@@ -190,6 +190,7 @@ AppWindow::AppWindow(I_GUIWindowImp &imp, const char *projectName)
   views_->songView.AddObserver(*this);
   views_->chainView.AddObserver(*this);
   views_->phraseView.AddObserver(*this);
+  views_->phraseSettingsView.AddObserver(*this);
   views_->deviceView.AddObserver(*this);
   views_->themeView.AddObserver(*this);
   views_->themeImportView.AddObserver(*this);
