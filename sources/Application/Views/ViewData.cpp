@@ -154,6 +154,12 @@ int ViewData::GetAbsolutePhraseStep(int visibleRow) const {
   return phraseOffset_ + visibleRow;
 }
 
+void ViewData::ClampPhraseEditorCursor() {
+  int visibleRow = phraseCurPos_ - phraseOffset_;
+  checkPhraseBoundaries(visibleRow);
+  phraseCurPos_ = phraseOffset_ + visibleRow;
+}
+
 void ViewData::checkPhraseBoundaries(int &visibleRow) {
   const int visibleRows = View::songRowCount_;
   const int len = song_->phrase_.GetLength(currentPhrase_);
