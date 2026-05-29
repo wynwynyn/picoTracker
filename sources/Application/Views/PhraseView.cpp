@@ -1052,7 +1052,7 @@ void PhraseView::processNormalButtonMask(unsigned short mask) {
       // Go to groove view
       stopAudition();
 
-      ViewType vt = VT_GROOVE;
+      ViewType vt = VT_PHRASE_SETTINGS;
       ViewEvent ve(VET_SWITCH_VIEW, &vt);
       SetChanged();
       NotifyObservers(&ve);

@@ -11,6 +11,7 @@ add_library(application_views
   DeviceView.cpp
   NullView.cpp
   PhraseView.cpp
+  PhraseSettingsView.cpp
   ProjectView.cpp
   RecordView.cpp
   SelectProjectView.cpp
