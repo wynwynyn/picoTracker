@@ -2,17 +2,17 @@
 
 This is an experimental branch containing features that are not in the official releases of the pT/pTA firmware. Some of them are very niche or specific features for my own preferences, and won't necessarily be suitable for commercial releases.
 
-If you somehow find this branch, compile it, and upload it to your pT, I will provide absolutely no support if things don't work correctly! Use this branch at your own risk/curiousity. Having said that, I'm happy to answer general questions about the extra features :) 
+If you somehow find this branch, compile it, and upload it to your pT, do so at your own risk/curiousity. Having said that, I'm happy to answer general questions about the extra features :) 
 
 Some features include:
-- Sending `MCC` commands without having to trigger a note
-- Sending `MPC` commands without having to trigger a note
-- Able to set phrase lengths longer than 16 steps (phrase options screen)
-- 8 extra channels (maybe limited to MIDI only)
-- MIDI effects
-- [very experimental] Able to set table speed
-- [very experimental] Able to set table lengths
-- [very experimental] Chain tables together (trigger `TBL` from tables)
+[x] Sending `MCC` commands without having to trigger a note
+[x] Sending `MPC` commands without having to trigger a note
+[] Able to set phrase lengths longer than 16 steps (phrase options screen)
+[] 8 extra channels (maybe limited to MIDI only)
+[] MIDI effects
+[] [very experimental] Able to set table speed
+[] [very experimental] Able to set table lengths
+[] [very experimental] Chain tables together (trigger `TBL` from tables)
 
 These features will only be tested on pTA, because pT probably doesn't have enough resources spare.
 
