@@ -10,6 +10,8 @@
 #include "Player.h"
 #include "Application/Instruments/CommandList.h"
 #include "Application/Instruments/I_Instrument.h"
+#include "Application/Instruments/InstrumentBank.h"
+#include "Application/Instruments/MidiInstrument.h"
 #include "Application/Instruments/SampleInstrument.h"
 #include "Application/Mixer/MixerService.h"
 #include "Application/Model/Groove.h"
@@ -614,6 +616,48 @@ void Player::Update(Observable &o, I_ObservableData *d) {
   }
 };
 
+MidiInstrument *Player::ResolvePhraseMidiInstrument(uchar phraseInstrIndex) {
+  if (phraseInstrIndex == 0xFF) {
+    return nullptr;
+  }
+
+  InstrumentBank *bank = project_->GetInstrumentBank();
+  I_Instrument *instrument = bank->GetInstrument(phraseInstrIndex);
+  if (instrument == nullptr || instrument->GetType() != IT_MIDI) {
+    return nullptr;
+  }
+
+  return static_cast<MidiInstrument *>(instrument);
+}
+
+void Player::ProcessPhraseCommand(int channel, FourCC cc, ushort param,
+                                  uchar phraseInstrIndex) {
+  if (cc == FourCC::InstrumentCommandNone) {
+    return;
+  }
+
+  if (ProcessChannelCommand(channel, cc, param)) {
+    return;
+  }
+
+  I_Instrument *instrument = mixer_.GetInstrument(channel);
+  if (instrument != nullptr) {
+    instrument->ProcessCommand(channel, cc, param);
+    return;
+  }
+
+  if (cc != FourCC::InstrumentCommandMidiCC &&
+      cc != FourCC::InstrumentCommandMidiPC &&
+      cc != FourCC::InstrumentCommandVolume) {
+    return;
+  }
+
+  MidiInstrument *midi = ResolvePhraseMidiInstrument(phraseInstrIndex);
+  if (midi != nullptr) {
+    midi->SendMidiOutputCommand(cc, param);
+  }
+}
+
 /************************************************************
  ProcessCommands:
         Check if there's any command to trigger at current playing
@@ -636,37 +680,16 @@ void Player::ProcessCommands() {
       if (phrase != 0xFF) {
         if (gs->TriggerChannel(i)) { // If groove says it is time to play
           int pos = viewData_->phrasePlayPos_[i];
-          FourCC cc = viewData_->song_->phrase_.cmd1_[phrase * 16 + pos];
-          ushort param = viewData_->song_->phrase_.param1_[phrase * 16 + pos];
+          int phraseOffset = phrase * 16 + pos;
+          uchar phraseInstr = viewData_->song_->phrase_.instr_[phraseOffset];
 
-          // if there's any command to trigger, first pass it on the player
-          // then pass it on to the instrument
+          FourCC cc = viewData_->song_->phrase_.cmd1_[phraseOffset];
+          ushort param = viewData_->song_->phrase_.param1_[phraseOffset];
+          ProcessPhraseCommand(i, cc, param, phraseInstr);
 
-          if (cc != FourCC::InstrumentCommandNone) {
-            if (!ProcessChannelCommand(i, cc, param)) {
-              I_Instrument *instrument = mixer_.GetInstrument(i);
-              if (instrument) {
-                instrument->ProcessCommand(i, cc, param);
-              }
-            };
-          };
-
-          // Now process second command row
-
-          cc = viewData_->song_->phrase_.cmd2_[phrase * 16 + pos];
-          param = viewData_->song_->phrase_.param2_[phrase * 16 + pos];
-
-          // if there's any command to trigger, first pass it on the player
-          // then pass it on to the instrument
-
-          if (cc != FourCC::InstrumentCommandNone) {
-            if (!ProcessChannelCommand(i, cc, param)) {
-              I_Instrument *instrument = mixer_.GetInstrument(i);
-              if (instrument) {
-                instrument->ProcessCommand(i, cc, param);
-              }
-            };
-          };
+          cc = viewData_->song_->phrase_.cmd2_[phraseOffset];
+          param = viewData_->song_->phrase_.param2_[phraseOffset];
+          ProcessPhraseCommand(i, cc, param, phraseInstr);
         }
       }
     }
