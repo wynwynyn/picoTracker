@@ -203,6 +203,45 @@ SECTIONS
 . = ALIGN(32);
 } > SDRAM2
 
+.SONG_DATA (NOLOAD) :
+{
+  . = ALIGN(32);
+  PROVIDE(__song_data_start = .);
+  *(.SONG_DATA .SONG_DATA.*)
+  . = ALIGN(32);
+  . = . + 0x100000;
+  PROVIDE(__song_data_end = .);
+} > SDRAM1
+
+.INSTRUMENT_BANK (NOLOAD) :
+{
+  . = ALIGN(32);
+  PROVIDE(__instrument_bank_start = .);
+  *(.INSTRUMENT_BANK .INSTRUMENT_BANK.*)
+  . = ALIGN(32);
+  . = . + 0x80000;
+  PROVIDE(__instrument_bank_end = .);
+} > SDRAM1
+
+.TABLE_DATA (NOLOAD) :
+{
+  . = ALIGN(32);
+  PROVIDE(__table_data_start = .);
+  *(.TABLE_DATA .TABLE_DATA.*)
+  . = ALIGN(32);
+  . = . + 0x40000;
+  PROVIDE(__table_data_end = .);
+} > SDRAM1
+
+.GROOVE_DATA (NOLOAD) :
+{
+  . = ALIGN(32);
+  PROVIDE(__groove_data_start = .);
+  *(.GROOVE_DATA .GROOVE_DATA.*)
+  . = ALIGN(32);
+  . = . + 0x4000;
+  PROVIDE(__groove_data_end = .);
+} > SDRAM1
 
   /* Remove information from the standard libraries */
   /DISCARD/ :
