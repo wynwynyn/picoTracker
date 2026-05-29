@@ -7,29 +7,15 @@ If you somehow find this branch, compile it, and upload it to your pT, do so at 
 Some features include:
 - [x] Sending `MCC` commands without having to trigger a note
 - [x] Sending `MPC` commands without having to trigger a note
-- [ ] Able to set phrase lengths longer than 16 steps (phrase options screen)
+- [x] Able to set phrase lengths longer than 16 steps (phrase options screen)
+    - involved memory refactor - moving things to SDRAM instead
 - [ ] 8 extra channels (maybe limited to MIDI only)
 - [ ] MIDI effects
+- [ ] [options] key repeat delay
+- [ ] [options] default phrase length
 - [ ] [very experimental] Able to set table speed
 - [ ] [very experimental] Able to set table lengths
 - [ ] [very experimental] Chain tables together (trigger `TBL` from tables)
-
-### Advance SDRAM model data (`experiment-memory-refactor`)
-
-On picoTracker Advance, this branch moves the song grid, instrument bank, tables, and groove data out of internal RAM into named SDRAM1 sections (`.SONG_DATA`, `.INSTRUMENT_BANK`, `.TABLE_DATA`, `.GROOVE_DATA`). Pico builds are unchanged.
-
-Build Advance firmware (see `docs/DEV.md`; `ADV` defaults to `true`):
-
-```bash
-mkdir build
-cd build
-cmake -DCMAKE_BUILD_TYPE=Release ../sources
-make -j8
-```
-
-A successful link means internal RAM overflow is resolved. Optionally inspect `build/Adapters/adv/picoTrackerAdvance.map` and confirm the four sections sit after the existing SDRAM1 pools and that `__groove_data_end` is below `0xC2000000`.
-
-After flashing, smoke test load/save, long phrase editing, instruments, tables, grooves, and playback while editing a phrase.
 
 These features will only be tested on pTA, because pT probably doesn't have enough resources spare.
 
