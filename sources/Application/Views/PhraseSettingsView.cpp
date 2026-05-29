@@ -14,11 +14,11 @@
 #include <nanoprintf.h>
 
 PhraseSettingsView::PhraseSettingsView(GUIWindow &w, ViewData *viewData)
-    : ScreenView(w, viewData), lengthFocused_(true) {}
+    : ScreenView(w, viewData), lengthFocused_(false) {}
 
 PhraseSettingsView::~PhraseSettingsView() {}
 
-void PhraseSettingsView::Reset() { lengthFocused_ = true; }
+void PhraseSettingsView::Reset() { lengthFocused_ = false; }
 
 void PhraseSettingsView::updateLength(int delta) {
   Phrase &phrase = viewData_->song_->phrase_;
@@ -120,4 +120,4 @@ void PhraseSettingsView::DrawView() {
   drawNotes();
 }
 
-void PhraseSettingsView::OnFocus() { lengthFocused_ = true; }
+void PhraseSettingsView::OnFocus() { lengthFocused_ = false; }
