@@ -12,11 +12,12 @@
 #include "Application/Model/Song.h"
 #include "Application/Model/Table.h"
 #include "advMemorySections.h"
+#include <cstring>
 #include <new>
 
 ADV_SECTION_SONG_DATA static char songBuf[sizeof(Song)];
 ADV_SECTION_INSTRUMENT_BANK static char instrumentBankBuf[sizeof(InstrumentBank)];
-ADV_SECTION_TABLE_DATA static Table tableStorage[TABLE_COUNT];
+ADV_SECTION_TABLE_DATA static char tableStorageBuf[sizeof(Table) * TABLE_COUNT];
 ADV_SECTION_TABLE_DATA static bool tableAllocation[TABLE_COUNT];
 ADV_SECTION_GROOVE_DATA static unsigned char grooveData[MAX_GROOVES][16];
 
@@ -26,8 +27,14 @@ void ModelStorage_Init() {
   if (modelStorageInitialized) {
     return;
   }
+  std::memset(songBuf, 0, sizeof(songBuf));
+  std::memset(instrumentBankBuf, 0, sizeof(instrumentBankBuf));
+  std::memset(tableStorageBuf, 0, sizeof(tableStorageBuf));
   new (songBuf) Song();
   new (instrumentBankBuf) InstrumentBank();
+  for (int i = 0; i < TABLE_COUNT; i++) {
+    new (tableStorageBuf + i * sizeof(Table)) Table();
+  }
   modelStorageInitialized = true;
 }
 
@@ -41,7 +48,10 @@ InstrumentBank &ModelStorage_GetInstrumentBank() {
   return *reinterpret_cast<InstrumentBank *>(instrumentBankBuf);
 }
 
-Table *ModelStorage_GetTables() { return tableStorage; }
+Table *ModelStorage_GetTables() {
+  ModelStorage_Init();
+  return reinterpret_cast<Table *>(tableStorageBuf);
+}
 
 bool *ModelStorage_GetTableAllocation() { return tableAllocation; }
 
