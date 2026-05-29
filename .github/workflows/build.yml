@@ -1,9 +1,8 @@
 name: Build
-on: 
-  push:
-    paths:
-      - sources/**
-      - .github/workflows/**
+# Firmware build is manual-only; clang-format runs on push/PR via
+# clang-format-check.yml.
+on:
+  workflow_dispatch:
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
