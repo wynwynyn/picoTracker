@@ -83,6 +83,8 @@ void PhraseView::Reset() {
 
   saveCol_ = 0;
   saveRow_ = 0;
+  savePhraseOffset_ = 0;
+  clipboard_.offset_ = 0;
   needsUIUpdate_ = false;
   needsLiveIndicatorUpdate_ = false;
 }
@@ -451,8 +453,10 @@ void PhraseView::cutPosition() {
   clipboard_.active_ = true;
   clipboard_.row_ = row_;
   clipboard_.col_ = col_;
+  clipboard_.offset_ = viewData_->phraseOffset_;
   saveRow_ = row_;
   saveCol_ = col_;
+  savePhraseOffset_ = viewData_->phraseOffset_;
 
   if (col_ % 2 == 0)
     col_ += 1; // This way, A+B on note cuts
@@ -515,7 +519,8 @@ void PhraseView::warpToNeighbour(int offset) {
  ******************************************************/
 
 GUIRect PhraseView::getSelectionRect() {
-  GUIRect r(clipboard_.col_, clipboard_.row_, col_, row_);
+  GUIRect r(clipboard_.col_, clipboard_.row_ + clipboard_.offset_, col_,
+            viewData_->phraseCurPos_);
   r.Normalize();
   return r;
 };
@@ -540,38 +545,21 @@ void PhraseView::fillClipboardData() {
 
   clipboard_.width_ = selRect.Width() + 1;
   clipboard_.height_ = selRect.Height() + 1;
-  clipboard_.row_ = selRect.Top();
   clipboard_.col_ = selRect.Left();
 
-  // Copy the data
-
-  uchar *src1 =
-      viewData_->song_->phrase_.note_ + 16 * viewData_->currentPhrase_;
-  uchar *dst1 = clipboard_.note_;
-  uchar *src2 =
-      viewData_->song_->phrase_.instr_ + 16 * viewData_->currentPhrase_;
-  uchar *dst2 = clipboard_.instr_;
-  uchar *src3 = (unsigned char *)viewData_->song_->phrase_.cmd1_ +
-                16 * viewData_->currentPhrase_;
-  uchar *dst3 = clipboard_.cmd1_;
-  ushort *src4 =
-      viewData_->song_->phrase_.param1_ + 16 * viewData_->currentPhrase_;
-  ushort *dst4 = clipboard_.param1_;
-  uchar *src5 = (unsigned char *)viewData_->song_->phrase_.cmd2_ +
-                16 * viewData_->currentPhrase_;
-  uchar *dst5 = clipboard_.cmd2_;
-  ushort *src6 =
-      viewData_->song_->phrase_.param2_ + 16 * viewData_->currentPhrase_;
-  ushort *dst6 = clipboard_.param2_;
-
+  Phrase &phrase = viewData_->song_->phrase_;
   for (int i = 0; i < clipboard_.height_; i++) {
-    dst1[i] = src1[clipboard_.row_ + i];
-    dst2[i] = src2[clipboard_.row_ + i];
-    dst3[i] = src3[clipboard_.row_ + i];
-    dst4[i] = src4[clipboard_.row_ + i];
-    dst5[i] = src5[clipboard_.row_ + i];
-    dst6[i] = src6[clipboard_.row_ + i];
-  };
+    const int idx =
+        Phrase::GetStepOffset(viewData_->currentPhrase_, selRect.Top() + i);
+    clipboard_.note_[i] = phrase.note_[idx];
+    clipboard_.instr_[i] = phrase.instr_[idx];
+    clipboard_.cmd1_[i] =
+        *reinterpret_cast<const uchar *>(&phrase.cmd1_[idx]);
+    clipboard_.param1_[i] = phrase.param1_[idx];
+    clipboard_.cmd2_[i] =
+        *reinterpret_cast<const uchar *>(&phrase.cmd2_[idx]);
+    clipboard_.param2_[i] = phrase.param2_[idx];
+  }
   updateCursor(0, 0);
 };
 
@@ -581,16 +569,21 @@ void PhraseView::updateSelectionValue(ViewUpdateDirection direction) { // HERE
   saveCol_ = col_;
 
   GUIRect r = getSelectionRect();
-  col_ = r.Left();
-  row_ = r.Top();
+  const int savedPos = viewData_->phraseCurPos_;
 
   for (int i = 0; i <= r.Width(); i++) {
     for (int j = 0; j <= r.Height(); j++) {
-      if (col_ + i < 2) {
-        updateCursorValue(direction, i, j);
+      if (r.Left() + i < 2) {
+        viewData_->phraseCurPos_ = r.Top() + j;
+        syncRowFromCursor();
+        col_ = r.Left() + i;
+        updateCursorValue(direction, 0, 0);
       }
     }
   }
+
+  viewData_->phraseCurPos_ = savedPos;
+  syncRowFromCursor();
   row_ = saveRow_;
   col_ = saveCol_;
 }
@@ -607,12 +600,23 @@ void PhraseView::extendSelection() {
     }
     isDirty_ = true;
   } else {
-    if (row_ < clipboard_.row_) {
+    const int len = phrase_->GetLength(viewData_->currentPhrase_);
+    const int curAbs = viewData_->phraseCurPos_;
+    const int clipAbs = clipboard_.row_ + clipboard_.offset_;
+    const int maxOffset =
+        (len > View::songRowCount_) ? len - View::songRowCount_ : 0;
+    if (curAbs < clipAbs) {
+      viewData_->phraseOffset_ = 0;
       row_ = 0;
-      clipboard_.row_ = 15;
+      viewData_->phraseCurPos_ = 0;
+      clipboard_.offset_ = maxOffset;
+      clipboard_.row_ = View::songRowCount_ - 1;
     } else {
+      clipboard_.offset_ = 0;
       clipboard_.row_ = 0;
-      row_ = 15;
+      viewData_->phraseOffset_ = maxOffset;
+      row_ = View::songRowCount_ - 1;
+      viewData_->phraseCurPos_ = len - 1;
     }
     isDirty_ = true;
   }
@@ -634,6 +638,8 @@ void PhraseView::copySelection() {
   viewMode_ = VM_NORMAL;
   row_ = saveRow_;
   col_ = saveCol_;
+  viewData_->phraseOffset_ = savePhraseOffset_;
+  viewData_->phraseCurPos_ = viewData_->phraseOffset_ + row_;
 
   isDirty_ = true;
 };
@@ -651,41 +657,30 @@ void PhraseView::cutSelection() {
 
   fillClipboardData();
 
-  // Loop over selection col, row & clear data inside it
-
-  uchar *dst1 =
-      viewData_->song_->phrase_.note_ + 16 * viewData_->currentPhrase_;
-  uchar *dst2 =
-      viewData_->song_->phrase_.instr_ + 16 * viewData_->currentPhrase_;
-  uchar *dst3 = (unsigned char *)viewData_->song_->phrase_.cmd1_ +
-                16 * viewData_->currentPhrase_;
-  ushort *dst4 =
-      viewData_->song_->phrase_.param1_ + 16 * viewData_->currentPhrase_;
-  uchar *dst5 = (unsigned char *)viewData_->song_->phrase_.cmd2_ +
-                16 * viewData_->currentPhrase_;
-  ushort *dst6 =
-      viewData_->song_->phrase_.param2_ + 16 * viewData_->currentPhrase_;
-
+  Phrase &phrase = viewData_->song_->phrase_;
+  GUIRect selRect = getSelectionRect();
   for (int i = 0; i < clipboard_.width_; i++) {
     for (int j = 0; j < clipboard_.height_; j++) {
+      const int idx =
+          Phrase::GetStepOffset(viewData_->currentPhrase_, selRect.Top() + j);
       switch (i + clipboard_.col_) {
       case 0:
-        dst1[j + clipboard_.row_] = 0xFF;
+        phrase.note_[idx] = 0xFF;
         break;
       case 1:
-        dst2[j + clipboard_.row_] = 0xFF;
+        phrase.instr_[idx] = 0xFF;
         break;
       case 2:
-        dst3[j + clipboard_.row_] = FourCC::InstrumentCommandNone;
+        phrase.cmd1_[idx] = FourCC::InstrumentCommandNone;
         break;
       case 3:
-        dst4[j + clipboard_.row_] = 0x0000;
+        phrase.param1_[idx] = 0x0000;
         break;
       case 4:
-        dst5[j + clipboard_.row_] = FourCC::InstrumentCommandNone;
+        phrase.cmd2_[idx] = FourCC::InstrumentCommandNone;
         break;
       case 5:
-        dst6[j + clipboard_.row_] = 0x0000;
+        phrase.param2_[idx] = 0x0000;
         break;
       }
     }
@@ -697,6 +692,8 @@ void PhraseView::cutSelection() {
   viewMode_ = VM_NORMAL;
   row_ = saveRow_;
   col_ = saveCol_;
+  viewData_->phraseOffset_ = savePhraseOffset_;
+  viewData_->phraseCurPos_ = viewData_->phraseOffset_ + row_;
   updateCursor(0, 0);
   isDirty_ = true;
 };
@@ -710,56 +707,40 @@ void PhraseView::pasteClipboard() {
 
   // Get number of row to paste
 
+  const int len = phrase_->GetLength(viewData_->currentPhrase_);
   int height = clipboard_.height_;
-  /*    if (row_+height>16) {
-          height=16-row_ ;
-      }
-    */
-  uchar *dst1 =
-      viewData_->song_->phrase_.note_ + 16 * viewData_->currentPhrase_;
-  uchar *src1 = clipboard_.note_;
-  uchar *dst2 =
-      viewData_->song_->phrase_.instr_ + 16 * viewData_->currentPhrase_;
-  uchar *src2 = clipboard_.instr_;
-  uchar *dst3 = (unsigned char *)viewData_->song_->phrase_.cmd1_ +
-                16 * viewData_->currentPhrase_;
-  uchar *src3 = clipboard_.cmd1_;
-  ushort *dst4 =
-      viewData_->song_->phrase_.param1_ + 16 * viewData_->currentPhrase_;
-  ushort *src4 = clipboard_.param1_;
-  uchar *dst5 = (unsigned char *)viewData_->song_->phrase_.cmd2_ +
-                16 * viewData_->currentPhrase_;
-  uchar *src5 = clipboard_.cmd2_;
-  ushort *dst6 =
-      viewData_->song_->phrase_.param2_ + 16 * viewData_->currentPhrase_;
-  ushort *src6 = clipboard_.param2_;
+  if (viewData_->phraseCurPos_ + height > len) {
+    height = len - viewData_->phraseCurPos_;
+  }
 
+  Phrase &phrase = viewData_->song_->phrase_;
   for (int i = 0; i < clipboard_.width_; i++) {
     for (int j = 0; j < height; j++) {
-      switch (i + clipboard_.col_) {
+      const int idx = Phrase::GetStepOffset(viewData_->currentPhrase_,
+                                            viewData_->phraseCurPos_ + j);
+      switch (i + col_) {
       case 0:
-        dst1[(j + row_) % 16] = src1[j];
+        phrase.note_[idx] = clipboard_.note_[j];
         break;
       case 1:
-        dst2[(j + row_) % 16] = src2[j];
+        phrase.instr_[idx] = clipboard_.instr_[j];
         break;
       case 2:
-        dst3[(j + row_) % 16] = src3[j];
+        phrase.cmd1_[idx] = *reinterpret_cast<const FourCC *>(&clipboard_.cmd1_[j]);
         break;
       case 3:
-        dst4[(j + row_) % 16] = src4[j];
+        phrase.param1_[idx] = clipboard_.param1_[j];
         break;
       case 4:
-        dst5[(j + row_) % 16] = src5[j];
+        phrase.cmd2_[idx] = *reinterpret_cast<const FourCC *>(&clipboard_.cmd2_[j]);
         break;
       case 5:
-        dst6[(j + row_) % 16] = src6[j];
+        phrase.param2_[idx] = clipboard_.param2_[j];
         break;
       }
     }
   }
-  int offset = (row_ + height) % 16 - row_;
-  updateCursor(0x00, offset);
+  updateCursor(0, height);
   isDirty_ = true;
 };
 
@@ -810,7 +791,10 @@ void PhraseView::switchSoloMode() {
 void PhraseView::OnFocus() {
   clipboard_.active_ = false;
   viewMode_ = VM_NORMAL;
-  updateCursor(0, 0);
+  viewData_->ClampPhraseEditorCursor();
+  syncRowFromCursor();
+  updateCmdEditField();
+  isDirty_ = true;
 };
 
 void PhraseView::ProcessButtonMask(unsigned short mask, bool pressed) {
@@ -846,7 +830,7 @@ void PhraseView::ProcessButtonMask(unsigned short mask, bool pressed) {
         unsigned short next = bank->GetNextAndAssignID(IT_NONE, nextId);
         if (next != NO_MORE_INSTRUMENT) {
           unsigned char *c =
-              phrase_->instr_ + (16 * viewData_->currentPhrase_ + row_);
+              phrase_->instr_ + (phraseStepIndex(viewData_->phraseCurPos_));
           *c = (unsigned char)next;
           lastInstr_ = next;
           isDirty_ = true;
@@ -860,13 +844,13 @@ void PhraseView::ProcessButtonMask(unsigned short mask, bool pressed) {
         mask &= (0xFFFF - EPBM_ENTER);
       } else {
         if ((col_ == 3) &&
-            (*(phrase_->cmd1_ + (16 * viewData_->currentPhrase_ + row_))) ==
+            (*(phrase_->cmd1_ + (phraseStepIndex(viewData_->phraseCurPos_)))) ==
                 FourCC::InstrumentCommandTable) {
           TableHolder *th = TableHolder::GetInstance();
           unsigned short next = th->GetNext();
           if (next != NO_MORE_TABLE) {
             ushort *c =
-                phrase_->param1_ + (16 * viewData_->currentPhrase_ + row_);
+                phrase_->param1_ + (phraseStepIndex(viewData_->phraseCurPos_));
             *c = next;
             isDirty_ = true;
             mask &= (0xFFFF - EPBM_ENTER);
@@ -874,13 +858,13 @@ void PhraseView::ProcessButtonMask(unsigned short mask, bool pressed) {
           }
         }
         if ((col_ == 5) &&
-            (*(phrase_->cmd2_ + (16 * viewData_->currentPhrase_ + row_))) ==
+            (*(phrase_->cmd2_ + (phraseStepIndex(viewData_->phraseCurPos_)))) ==
                 FourCC::InstrumentCommandTable) {
           TableHolder *th = TableHolder::GetInstance();
           unsigned short next = th->GetNext();
           if (next != NO_MORE_TABLE) {
             ushort *c =
-                phrase_->param2_ + (16 * viewData_->currentPhrase_ + row_);
+                phrase_->param2_ + (phraseStepIndex(viewData_->phraseCurPos_));
             *c = next;
             isDirty_ = true;
             mask &= (0xFFFF - EPBM_ENTER);
@@ -900,7 +884,7 @@ void PhraseView::ProcessButtonMask(unsigned short mask, bool pressed) {
     if (col_ < 2) {
       InstrumentBank *bank = viewData_->project_->GetInstrumentBank();
       unsigned char *c =
-          phrase_->instr_ + (16 * viewData_->currentPhrase_ + row_);
+          phrase_->instr_ + (phraseStepIndex(viewData_->phraseCurPos_));
       if (*c != 0xFF) {
         unsigned short next = bank->Clone(*c);
         if (next != NO_MORE_INSTRUMENT) {
@@ -911,16 +895,16 @@ void PhraseView::ProcessButtonMask(unsigned short mask, bool pressed) {
       }
     } else {
       if ((col_ == 3) &&
-          (*(phrase_->cmd1_ + (16 * viewData_->currentPhrase_ + row_))) ==
+          (*(phrase_->cmd1_ + (phraseStepIndex(viewData_->phraseCurPos_)))) ==
               FourCC::InstrumentCommandTable) {
         TableHolder *th = TableHolder::GetInstance();
         int current =
-            *(phrase_->param1_ + (16 * viewData_->currentPhrase_ + row_));
+            *(phrase_->param1_ + (phraseStepIndex(viewData_->phraseCurPos_)));
         if (current != -1) {
           unsigned short next = th->Clone(current);
           if (next != NO_MORE_TABLE) {
             ushort *c =
-                phrase_->param1_ + (16 * viewData_->currentPhrase_ + row_);
+                phrase_->param1_ + (phraseStepIndex(viewData_->phraseCurPos_));
             *c = next;
             isDirty_ = true;
             cmdEdit_.SetInt(next);
@@ -930,14 +914,14 @@ void PhraseView::ProcessButtonMask(unsigned short mask, bool pressed) {
         }
       }
       if ((col_ == 5) &&
-          (*(phrase_->cmd2_ + (16 * viewData_->currentPhrase_ + row_))) ==
+          (*(phrase_->cmd2_ + (phraseStepIndex(viewData_->phraseCurPos_)))) ==
               FourCC::InstrumentCommandTable) {
         TableHolder *th = TableHolder::GetInstance();
         unsigned short next = th->Clone(
-            *(phrase_->param2_ + (16 * viewData_->currentPhrase_ + row_)));
+            *(phrase_->param2_ + (phraseStepIndex(viewData_->phraseCurPos_))));
         if (next != NO_MORE_TABLE) {
           ushort *c =
-              phrase_->param2_ + (16 * viewData_->currentPhrase_ + row_);
+              phrase_->param2_ + (phraseStepIndex(viewData_->phraseCurPos_));
           *c = next;
           isDirty_ = true;
           cmdEdit_.SetInt(next);
@@ -955,8 +939,10 @@ void PhraseView::ProcessButtonMask(unsigned short mask, bool pressed) {
       clipboard_.active_ = true;
       clipboard_.col_ = col_;
       clipboard_.row_ = row_;
+      clipboard_.offset_ = viewData_->phraseOffset_;
       saveCol_ = col_;
       saveRow_ = row_;
+      savePhraseOffset_ = viewData_->phraseOffset_;
     }
     processSelectionButtonMask(mask);
   } else {
@@ -1027,7 +1013,7 @@ void PhraseView::processNormalButtonMask(unsigned short mask) {
     }
     if (mask & EPBM_RIGHT) {
       unsigned char *c =
-          phrase_->instr_ + (16 * viewData_->currentPhrase_ + row_);
+          phrase_->instr_ + (phraseStepIndex(viewData_->phraseCurPos_));
       if (*c != 0xFF) {
         viewData_->currentInstrumentID_ = *c;
       } else {
@@ -1045,13 +1031,13 @@ void PhraseView::processNormalButtonMask(unsigned short mask) {
 
       ViewType vt = VT_TABLE;
 
-      FourCC *cmd = phrase_->cmd1_ + (16 * viewData_->currentPhrase_ + row_);
+      FourCC *cmd = phrase_->cmd1_ + (phraseStepIndex(viewData_->phraseCurPos_));
       ushort *param =
-          phrase_->param1_ + (16 * viewData_->currentPhrase_ + row_);
+          phrase_->param1_ + (phraseStepIndex(viewData_->phraseCurPos_));
 
       if (*cmd != FourCC::InstrumentCommandTable) {
-        cmd = phrase_->cmd2_ + (16 * viewData_->currentPhrase_ + row_);
-        param = phrase_->param2_ + (16 * viewData_->currentPhrase_ + row_);
+        cmd = phrase_->cmd2_ + (phraseStepIndex(viewData_->phraseCurPos_));
+        param = phrase_->param2_ + (phraseStepIndex(viewData_->phraseCurPos_));
       }
       if (*cmd == FourCC::InstrumentCommandTable) {
         viewData_->currentTable_ = (*param) & (TABLE_COUNT - 1);
@@ -1062,7 +1048,7 @@ void PhraseView::processNormalButtonMask(unsigned short mask) {
     }
 
     if (mask & EPBM_UP) {
-      // Go to groove view
+      // Go to phrase settings (length), then groove from there
       stopAudition();
 
       ViewType vt = VT_PHRASE_SETTINGS;
@@ -1141,7 +1127,7 @@ void PhraseView::processSelectionButtonMask(unsigned short mask) {
         }
         if (mask & EPBM_RIGHT) {
           unsigned char *c =
-              phrase_->instr_ + (16 * viewData_->currentPhrase_ + row_);
+              phrase_->instr_ + (phraseStepIndex(viewData_->phraseCurPos_));
           if (*c != 0xFF) {
             viewData_->currentInstrumentID_ = *c;
           } else {
@@ -1191,8 +1177,9 @@ void PhraseView::setTextProps(GUITextProperties &props, int row, int col,
 
   if (clipboard_.active_) {
     GUIRect selRect = getSelectionRect();
+    const int absStep = viewData_->phraseOffset_ + col;
     if ((row >= selRect.Left()) && (row <= selRect.Right()) &&
-        (col >= selRect.Top()) && (col <= selRect.Bottom())) {
+        (absStep >= selRect.Top()) && (absStep <= selRect.Bottom())) {
       invert = true;
     }
   } else {
@@ -1237,9 +1224,12 @@ void PhraseView::DrawView() {
   char buffer[6];
   pos = anchor;
   pos._x -= 3;
-  for (int j = 0; j < 16; j++) {
-    ((j / ALT_ROW_NUMBER) % 2) ? SetColor(CD_ACCENT) : SetColor(CD_ACCENTALT);
-    hex2char(j, buffer);
+  for (int j = 0; j < View::songRowCount_; j++) {
+    const unsigned char stepLabel =
+        static_cast<unsigned char>(viewData_->phraseOffset_ + j);
+    ((stepLabel / ALT_ROW_NUMBER) % 2) ? SetColor(CD_ACCENT)
+                                       : SetColor(CD_ACCENTALT);
+    hex2char(stepLabel, buffer);
     DrawString(pos._x, pos._y, buffer, props);
     pos._y++;
   }
@@ -1249,22 +1239,22 @@ void PhraseView::DrawView() {
   pos = anchor;
 
   // Display notes
-  unsigned char *data = phrase_->note_ + (16 * viewData_->currentPhrase_);
-  unsigned char *instrData = phrase_->instr_ + (16 * viewData_->currentPhrase_);
   unsigned char lastInstr = 0xFF;
   InstrumentBank *bank = viewData_->project_->GetInstrumentBank();
 
   buffer[4] = 0;
-  for (int j = 0; j < 16; j++) {
-    unsigned char d = *data++;
-    unsigned char instr = *instrData++;
+  for (int j = 0; j < View::songRowCount_; j++) {
+    const int idx = Phrase::GetStepOffset(viewData_->currentPhrase_,
+                                          viewData_->phraseOffset_ + j);
+    unsigned char d = phrase_->note_[idx];
+    unsigned char instr = phrase_->instr_[idx];
     if (instr != 0xFF) {
       lastInstr = instr;
     }
     unsigned char effectiveInstr = lastInstr;
     setTextProps(props, 0, j, false);
-    (0 == j || 4 == j || 8 == j || 12 == j) ? SetColor(CD_HILITE1)
-                                            : SetColor(CD_NORMAL);
+    const int absStep = viewData_->phraseOffset_ + j;
+    (0 == absStep % ALT_ROW_NUMBER) ? SetColor(CD_HILITE1) : SetColor(CD_NORMAL);
     if (d == NO_NOTE) {
       DrawString(pos._x, pos._y, "----", props);
     } else if (d == NOTE_OFF) {
@@ -1307,12 +1297,13 @@ void PhraseView::DrawView() {
   pos = anchor;
   pos._x += 4;
 
-  data = phrase_->instr_ + (16 * viewData_->currentPhrase_);
   buffer[0] = 'I';
   buffer[3] = 0;
 
-  for (int j = 0; j < 16; j++) {
-    unsigned char d = *data++;
+  for (int j = 0; j < View::songRowCount_; j++) {
+    const int idx = Phrase::GetStepOffset(viewData_->currentPhrase_,
+                                          viewData_->phraseOffset_ + j);
+    unsigned char d = phrase_->instr_[idx];
     setTextProps(props, 1, j, false);
     if (d == 0xFF) {
       DrawString(pos._x, pos._y, "I--", props);
@@ -1340,10 +1331,10 @@ void PhraseView::DrawView() {
   pos = anchor;
   pos._x += 8;
 
-  FourCC *f = phrase_->cmd1_ + (16 * viewData_->currentPhrase_);
-
-  for (int j = 0; j < 16; j++) {
-    FourCC command = *f++;
+  for (int j = 0; j < View::songRowCount_; j++) {
+    const int idx = Phrase::GetStepOffset(viewData_->currentPhrase_,
+                                          viewData_->phraseOffset_ + j);
+    FourCC command = phrase_->cmd1_[idx];
     setTextProps(props, 2, j, false);
     DrawString(pos._x, pos._y, command.c_str(), props);
     setTextProps(props, 2, j, true);
@@ -1358,11 +1349,12 @@ void PhraseView::DrawView() {
   pos = anchor;
   pos._x += 12;
 
-  ushort *param = phrase_->param1_ + (16 * viewData_->currentPhrase_);
   buffer[5] = 0;
 
-  for (int j = 0; j < 16; j++) {
-    ushort p = *param++;
+  for (int j = 0; j < View::songRowCount_; j++) {
+    const int idx = Phrase::GetStepOffset(viewData_->currentPhrase_,
+                                          viewData_->phraseOffset_ + j);
+    ushort p = phrase_->param1_[idx];
     setTextProps(props, 3, j, false);
     /*		if (p==0xFFFF) {
                             DrawString(pos._x,pos._y,"----",props) ;
@@ -1381,10 +1373,10 @@ void PhraseView::DrawView() {
   pos = anchor;
   pos._x += 17;
 
-  f = phrase_->cmd2_ + (16 * viewData_->currentPhrase_);
-
-  for (int j = 0; j < 16; j++) {
-    FourCC command = *f++;
+  for (int j = 0; j < View::songRowCount_; j++) {
+    const int idx = Phrase::GetStepOffset(viewData_->currentPhrase_,
+                                          viewData_->phraseOffset_ + j);
+    FourCC command = phrase_->cmd2_[idx];
     setTextProps(props, 4, j, false);
     DrawString(pos._x, pos._y, command.c_str(), props);
     setTextProps(props, 4, j, true);
@@ -1399,11 +1391,12 @@ void PhraseView::DrawView() {
   pos = anchor;
   pos._x += 21;
 
-  param = phrase_->param2_ + (16 * viewData_->currentPhrase_);
   buffer[5] = 0;
 
-  for (int j = 0; j < 16; j++) {
-    ushort p = *param++;
+  for (int j = 0; j < View::songRowCount_; j++) {
+    const int idx = Phrase::GetStepOffset(viewData_->currentPhrase_,
+                                          viewData_->phraseOffset_ + j);
+    ushort p = phrase_->param2_[idx];
     setTextProps(props, 5, j, false);
     /*		if (p==0xFFFF) {
                             DrawString(pos._x,pos._y,"----",props) ;
