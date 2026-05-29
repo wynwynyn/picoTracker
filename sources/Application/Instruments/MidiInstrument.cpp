@@ -230,7 +230,39 @@ bool MidiInstrument::IsInitialized() {
   return true; // Always initialised
 };
 
+bool MidiInstrument::SendMidiOutputCommand(FourCC cc, ushort value) const {
+  int mchannel = channel_.GetInt();
+
+  switch (cc) {
+  case FourCC::InstrumentCommandVolume: {
+    MidiMessage msg;
+    msg.status_ = MidiMessage::MIDI_CONTROL_CHANGE + mchannel;
+    msg.data1_ = MidiCC::CC_VOLUME;
+    msg.data2_ = value / 2;
+    svc_->QueueMessage(msg);
+    return true;
+  }
+  case FourCC::InstrumentCommandMidiCC: {
+    MidiMessage msg;
+    msg.status_ = MidiMessage::MIDI_CONTROL_CHANGE + mchannel;
+    msg.data1_ = (value & 0x7F00) >> 8;
+    msg.data2_ = (value & 0x7F);
+    svc_->QueueMessage(msg);
+    return true;
+  }
+  case FourCC::InstrumentCommandMidiPC:
+    SendProgramChange(mchannel, value & 0x7F);
+    return true;
+  default:
+    return false;
+  }
+}
+
 void MidiInstrument::ProcessCommand(int channel, FourCC cc, ushort value) {
+
+  if (SendMidiOutputCommand(cc, value)) {
+    return;
+  }
 
   Variable *v = FindVariable(FourCC::MidiInstrumentChannel);
   int mchannel = v->GetInt();
@@ -274,26 +306,6 @@ void MidiInstrument::ProcessCommand(int channel, FourCC cc, ushort value) {
     // VELM cmds set velocity for MIDI steps
     // Ensure velocity doesn't exceed 127 (MIDI spec maximum)
     velocity_ = value & 0x7F;
-  }; break;
-
-  case FourCC::InstrumentCommandVolume: {
-    MidiMessage msg;
-    msg.status_ = MidiMessage::MIDI_CONTROL_CHANGE + mchannel;
-    msg.data1_ = MidiCC::CC_VOLUME;
-    msg.data2_ = value / 2;
-    svc_->QueueMessage(msg);
-  }; break;
-
-  case FourCC::InstrumentCommandMidiCC: {
-    MidiMessage msg;
-    msg.status_ = MidiMessage::MIDI_CONTROL_CHANGE + mchannel;
-    msg.data1_ = (value & 0x7F00) >> 8;
-    msg.data2_ = (value & 0x7F);
-    svc_->QueueMessage(msg);
-  }; break;
-
-  case FourCC::InstrumentCommandMidiPC: {
-    SendProgramChange(mchannel, value & 0x7F);
   }; break;
 
   case FourCC::InstrumentCommandMidiChord: {
@@ -368,7 +380,7 @@ void MidiInstrument::SetTableState(TableSaveState &state) {
   memcpy(tableState_.position_, state.position_, sizeof(int) * 3);
 };
 
-void MidiInstrument::SendProgramChange(int channel, int program) {
+void MidiInstrument::SendProgramChange(int channel, int program) const {
   MidiMessage msg;
   msg.status_ = MidiMessage::MIDI_PROGRAM_CHANGE + channel;
   msg.data1_ = program;
