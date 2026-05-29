@@ -21,6 +21,10 @@
 #include "Foundation/Variables/WatchedVariable.h"
 #include "Song.h"
 
+#ifdef ADV
+#include "ModelStorage.h"
+#endif
+
 #define PROJECT_NUMBER "2.3.1-experimental"
 #define PROJECT_RELEASE "r"
 // BUILD_COUNT define comes from BuildNumber.h
@@ -40,7 +44,11 @@ public:
   void PurgeInstruments();
   void PurgeSamples();
 
+#ifdef ADV
+  Song &song_;
+#else
   Song song_;
+#endif
 
   int GetMasterVolume();
   int GetChannelVolume(int channel);
@@ -69,7 +77,11 @@ public:
 private:
   etl::list<Variable *, 16> variables_;
 
+#ifdef ADV
+  InstrumentBank &instrumentBank_;
+#else
   InstrumentBank instrumentBank_;
+#endif
   int tempoNudge_;
   unsigned long lastTap_[MAX_TAP];
   unsigned int tempoTapCount_;
