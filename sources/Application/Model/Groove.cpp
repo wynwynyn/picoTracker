@@ -30,7 +30,7 @@ Groove::Groove() : Persistent("GROOVES") { Clear(); };
 Groove::~Groove(){};
 
 void Groove::Clear() {
-  unsigned char (*data)[16] = grooveRows();
+  unsigned char(*data)[16] = grooveRows();
   // Init all grooves with basic datas
   memset(data, NO_GROOVE_DATA, MAX_GROOVES * 0xF);
   for (int i = 0; i < MAX_GROOVES; i++) {
@@ -48,7 +48,7 @@ void Groove::Clear() {
 // Resest groove data at song startup
 
 void Groove::Reset() {
-  unsigned char (*data)[16] = grooveRows();
+  unsigned char(*data)[16] = grooveRows();
   for (int i = 0; i < SONG_CHANNEL_COUNT; i++) {
     // Channel
     ChannelGroove &c = channelGroove_[i];
@@ -85,7 +85,7 @@ void Groove::Trigger() {
 bool Groove::UpdateGroove(ChannelGroove &c, bool reverse) {
 
   bool stepped = false;
-  unsigned char (*data)[16] = grooveRows();
+  unsigned char(*data)[16] = grooveRows();
 
   if (reverse) { // Table
     c.ticks_++;
@@ -121,7 +121,7 @@ bool Groove::UpdateGroove(ChannelGroove &c, bool reverse) {
 void Groove::SetGroove(int channel, int groove) {
   if (groove >= MAX_GROOVES)
     return;
-  unsigned char (*data)[16] = grooveRows();
+  unsigned char(*data)[16] = grooveRows();
   channelGroove_[channel].groove_ = groove;
   channelGroove_[channel].position_ = 0;
   channelGroove_[channel].ticks_ =
@@ -132,7 +132,7 @@ void Groove::SetGroove(int channel, int groove) {
 // to the next sequencing step
 
 bool Groove::TriggerChannel(int i) {
-  unsigned char (*data)[16] = grooveRows();
+  unsigned char(*data)[16] = grooveRows();
   ChannelGroove &c = channelGroove_[i];
   return ((c.ticks_) % (data[c.groove_][c.position_]) == 0);
 };
