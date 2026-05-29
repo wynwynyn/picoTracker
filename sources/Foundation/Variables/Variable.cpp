@@ -140,7 +140,7 @@ float Variable::GetFloat() {
   return 0.0f;
 };
 
-int Variable::GetInt() {
+int Variable::GetInt() const {
   switch (type_) {
   case FLOAT:
     return int(value_.float_);

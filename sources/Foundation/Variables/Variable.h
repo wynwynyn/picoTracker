@@ -36,7 +36,7 @@ public:
 
   Type GetType();
   void SetInt(int value, bool notify = true);
-  int GetInt();
+  int GetInt() const;
   void SetFloat(float value, bool notify = true);
   float GetFloat();
   virtual void SetString(const char *string, bool notify = true);
