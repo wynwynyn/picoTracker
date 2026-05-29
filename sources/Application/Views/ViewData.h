@@ -33,8 +33,13 @@ public:
   void SetChainPhrase(unsigned char value);
   unsigned char *GetCurrentChainPointer();
 
+  void UpdatePhraseOffset(int offset);
+  void UpdatePhraseRow(int &visibleRow, int dy);
+  int GetAbsolutePhraseStep(int visibleRow) const;
+
 protected:
   void checkSongBoundaries();
+  void checkPhraseBoundaries(int &visibleRow);
 
   inline void updateData(unsigned char *c, int offset, unsigned char limit,
                          bool wrap) {
@@ -87,7 +92,8 @@ public:
                                               // channel
   int phrasePlayPos_[SONG_CHANNEL_COUNT]; // .Play position in phrase for each
                                           // channel
-  int phraseCurPos_;                      // current UI cursor row position
+  int phraseOffset_; // top visible step in phrase editor
+  int phraseCurPos_; // absolute phrase step under cursor
 
   // Sample Editor
   etl::string<MAX_INSTRUMENT_FILENAME_LENGTH> sampleEditorFilename;
