@@ -12,6 +12,7 @@
 #include "Adapters/adv/gui/GUIFactory.h"
 #include "Adapters/adv/midi/advMidiService.h"
 #include "Adapters/adv/system/advSamplePool.h"
+#include "Application/Model/ModelStorage.h"
 #include "Adapters/adv/timer/advTimer.h"
 #include "Application/Model/Config.h"
 #include "Application/Player/SyncMaster.h"
@@ -44,6 +45,8 @@ int advSystem::MainLoop() {
 };
 
 void advSystem::Boot() {
+
+  ModelStorage_Init();
 
   // Start high resolution timer
   HAL_TIM_Base_Start(&htim2);
