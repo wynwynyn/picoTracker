@@ -8,6 +8,9 @@
  */
 
 #include "Table.h"
+#ifdef ADV
+#include "ModelStorage.h"
+#endif
 #include "Application/Instruments/CommandList.h"
 #include "Application/Utils/HexBuffers.h"
 #include "Application/Utils/char.h"
@@ -65,20 +68,30 @@ bool Table::IsEmpty() {
 //////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////
 
+#ifdef ADV
+Table *TableHolder::tables() { return ModelStorage_GetTables(); }
+
+bool *TableHolder::allocations() { return ModelStorage_GetTableAllocation(); }
+#else
+Table *TableHolder::tables() { return table_; }
+
+bool *TableHolder::allocations() { return allocation_; }
+#endif
+
 TableHolder::TableHolder() : Persistent("TABLES") { Reset(); }
 
 void TableHolder::Reset() {
   for (int i = 0; i < SONG_CHANNEL_COUNT; i++) {
-    table_[i].Reset();
+    tables()[i].Reset();
   }
   for (int i = 0; i < TABLE_COUNT; i++) {
-    allocation_[i] = false;
+    allocations()[i] = false;
   };
 };
 
 Table &TableHolder::GetTable(int table) {
   NAssert((table >= 0) && (table < TABLE_COUNT));
-  return table_[table];
+  return tables()[table];
 }
 
 void TableHolder::SaveContent(tinyxml2::XMLPrinter *printer) {
@@ -89,7 +102,7 @@ void TableHolder::SaveContent(tinyxml2::XMLPrinter *printer) {
     hex2char(i, hex);
     printer->PushAttribute("ID", hex);
 
-    Table &table = table_[i];
+    Table &table = tables()[i];
     if (!table.IsEmpty()) {
       //      TiXmlNode *dataNode = node->InsertEndChild(data);
       saveHexBuffer(printer, "CMD1", table.cmd1_, TABLE_STEPS);
@@ -123,7 +136,7 @@ void TableHolder::RestoreContent(PersistencyDocument *doc) {
         attr = doc->NextAttribute();
       }
 
-      Table &table = table_[id];
+      Table &table = tables()[id];
 
       bool subelem = doc->FirstChild();
       while (subelem) {
@@ -147,7 +160,7 @@ void TableHolder::RestoreContent(PersistencyDocument *doc) {
         };
         subelem = doc->NextSibling();
       }
-      allocation_[id] = !table.IsEmpty();
+      allocations()[id] = !table.IsEmpty();
     }
     elem = doc->NextSibling();
   }
@@ -157,14 +170,14 @@ void TableHolder::SetUsed(int i) {
   if (i >= TABLE_COUNT) {
     NAssert(i < 128);
   }
-  allocation_[i] = true;
+  allocations()[i] = true;
 };
 
 int TableHolder::GetNext() {
   for (int i = 0; i < TABLE_COUNT; i++) {
-    if (!allocation_[i]) {
-      if (table_[i].IsEmpty()) {
-        allocation_[i] = true;
+    if (!allocations()[i]) {
+      if (tables()[i].IsEmpty()) {
+        allocations()[i] = true;
         return i;
       }
     };
@@ -175,7 +188,7 @@ int TableHolder::GetNext() {
 int TableHolder::Clone(int table) {
   int target = GetNext();
   if (target != NO_MORE_TABLE) {
-    table_[target].Copy(table_[table]);
+    tables()[target].Copy(tables()[table]);
   };
   return target;
 };

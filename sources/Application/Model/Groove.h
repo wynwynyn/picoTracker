@@ -41,6 +41,9 @@ public:
 
 private:
   ChannelGroove channelGroove_[SONG_CHANNEL_COUNT];
+#ifndef ADV
   static unsigned char data_[MAX_GROOVES][16];
+#endif
+  static unsigned char (*grooveRows())[16];
 };
 #endif
