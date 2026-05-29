@@ -273,7 +273,7 @@ void Project::Purge() {
   ushort *param2 = song_.phrase_.param2_;
 
   for (int i = 0; i < PHRASE_COUNT; i++) {
-    for (int j = 0; j < 16; j++) {
+    for (int j = 0; j < MAX_STEPS_PER_PHRASE; j++) {
       if (!song_.phrase_.IsUsed(i)) {
         *data = DATA_UNUSED_VALUE;
         *data2 = DATA_UNUSED_VALUE;
@@ -348,7 +348,7 @@ void Project::PurgeInstruments() {
   unsigned char *data = song_.phrase_.instr_;
 
   for (int i = 0; i < PHRASE_COUNT; i++) {
-    for (int j = 0; j < 16; j++) {
+    for (int j = 0; j < MAX_STEPS_PER_PHRASE; j++) {
       if (*data != DATA_UNUSED_VALUE) {
         NAssert(*data < MAX_INSTRUMENT_COUNT);
         used[*data] = true;
