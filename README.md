@@ -1,3 +1,19 @@
+# Experimental firmware testing
+
+This is an experimental branch containing features that are not in the official releases of the pT/pTA firmware. Some of them are very niche or specific features for my own preferences, and won't necessarily be suitable for commercial releases.
+
+If you somehow find this branch, compile it, and upload it to your pT, I will provide absolutely no support if things don't work correctly! Use this branch at your own risk/curiousity. Having said that, I'm happy to answer general questions about the extra features :) 
+
+Some features include:
+- Sending `MCC` commands without having to trigger a note
+- Sending `MCH` commands without having to trigger a note
+- Able to set phrase lengths longer than 16 steps (phrase options screen)
+- 8 extra channels (maybe limited to MIDI only)
+- MIDI effects
+- [very experimental] Able to set table speed
+- [very experimental] Able to set table lengths
+- [very experimental] Chain tables together (trigger `TBL` from tables)
+
 # picoTracker
 
 picoTracker is a project that aims to provide a low cost open source and DIY hardware music tracker platform. It's firmware started as a modified version of [LittleGPTracker](https://littlegptracker.com/) (a.k.a piggy tracker) but has now diverged in many areas and added alot of new and improved functionality. It implements a user interface similar to the refined track-by-joypad software [*littlesounddj*](http://www.littlesounddj.com/).
