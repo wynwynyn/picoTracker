@@ -77,20 +77,6 @@ void PhraseSettingsView::ProcessButtonMask(unsigned short mask, bool pressed) {
     if (mask & EPBM_UP) {
       updateLength(1);
     }
-    return;
-  }
-
-  if (mask & EPBM_DOWN) {
-    ViewType vt = VT_PHRASE;
-    ViewEvent ve(VET_SWITCH_VIEW, &vt);
-    SetChanged();
-    NotifyObservers(&ve);
-  }
-  if (mask & EPBM_UP) {
-    ViewType vt = VT_GROOVE;
-    ViewEvent ve(VET_SWITCH_VIEW, &vt);
-    SetChanged();
-    NotifyObservers(&ve);
   }
 }
 
