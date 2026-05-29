@@ -78,6 +78,7 @@ private:
     bool active_;
     int col_;
     int row_;
+    int offset_;
     int width_;
     int height_;
     uchar note_[16];
@@ -90,6 +91,7 @@ private:
 
   int saveCol_;
   int saveRow_;
+  int savePhraseOffset_;
 
   static short offsets_[2][4];
 
