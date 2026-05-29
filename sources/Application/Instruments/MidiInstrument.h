@@ -64,8 +64,11 @@ public:
   etl::ilist<Variable *> *Variables() { return &variables_; };
 
   void SetChannel(int i);
-  void SendProgramChange(int channel, int program);
+  void SendProgramChange(int channel, int program) const;
   void SendProgramChangeWithNote(int channel, int program);
+
+  // Channel-level MIDI output without starting a note (MCC, MPC, VOL).
+  bool SendMidiOutputCommand(FourCC cc, ushort value) const;
 
   // Static callback for handling delayed note-off messages
   static void NoteOffCallback();
