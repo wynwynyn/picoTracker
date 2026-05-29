@@ -34,6 +34,8 @@ enum QueueingMode {
 
 typedef uint32_t MixerStereoLevel;
 
+class MidiInstrument;
+
 class PlayerEvent : public ViewEvent {
 public:
   PlayerEvent(PlayerEventType type, unsigned int tickCount = 0);
@@ -146,6 +148,10 @@ protected:
   void moveToNextChain(int channel, int hop);
 
   void triggerLiveChains();
+
+  void ProcessPhraseCommand(int channel, FourCC cc, ushort param,
+                            uchar phraseInstrIndex);
+  MidiInstrument *ResolvePhraseMidiInstrument(uchar phraseInstrIndex);
 
   void SetAudioActive(bool active);
 
