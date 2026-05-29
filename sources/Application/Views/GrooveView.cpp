@@ -236,4 +236,4 @@ void GrooveView::OnPlayerUpdate(PlayerEventType, unsigned int tick) {
   drawNotes();
 };
 
-void GrooveView::OnFocus() {};
+void GrooveView::OnFocus() {}
