@@ -14,6 +14,8 @@ Some features include:
 - [very experimental] Able to set table lengths
 - [very experimental] Chain tables together (trigger `TBL` from tables)
 
+These features will only be tested on pTA, because pT probably doesn't have enough resources spare.
+
 # picoTracker
 
 picoTracker is a project that aims to provide a low cost open source and DIY hardware music tracker platform. It's firmware started as a modified version of [LittleGPTracker](https://littlegptracker.com/) (a.k.a piggy tracker) but has now diverged in many areas and added alot of new and improved functionality. It implements a user interface similar to the refined track-by-joypad software [*littlesounddj*](http://www.littlesounddj.com/).
