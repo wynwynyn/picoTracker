@@ -334,6 +334,7 @@ void MidiInstrument::ProcessCommand(int channel, FourCC cc, ushort value) {
     uint8_t interval = static_cast<uint8_t>(value & 0xFF);
     if (count == 0) {
       delayRepeatCount_ = 0;
+      MidiDelayEngine::GetInstance().FlushChannel(channel);
     } else {
       delayRepeatCount_ = count;
       delayInterval_ = (interval == 0) ? 1 : interval;
