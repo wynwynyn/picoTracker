@@ -23,7 +23,7 @@ uint8_t clampNote(int note) {
 }
 
 uint8_t echoVelocity(uint8_t initialVelocity, uint8_t repeatsLeft,
-                    uint8_t totalRepeats) {
+                     uint8_t totalRepeats) {
   if (totalRepeats == 0) {
     return 1;
   }
@@ -98,8 +98,8 @@ void MidiDelayEngine::sendNoteOff(const Voice &voice) {
 void MidiDelayEngine::prepareNextEcho(Voice &voice) {
   int nextNote = static_cast<int>(voice.note) + voice.semitoneStep;
   voice.note = clampNote(nextNote);
-  voice.velocity =
-      echoVelocity(voice.initialVelocity, voice.repeatsLeft, voice.totalRepeats);
+  voice.velocity = echoVelocity(voice.initialVelocity, voice.repeatsLeft,
+                                voice.totalRepeats);
 }
 
 void MidiDelayEngine::advanceVoice(Voice &voice) {
@@ -185,7 +185,8 @@ void MidiDelayEngine::AdvanceTick() {
 
 void MidiDelayEngine::FlushChannel(int songChannel) {
   for (auto &voice : voices_) {
-    if (voice.active && voice.songChannel == static_cast<uint8_t>(songChannel)) {
+    if (voice.active &&
+        voice.songChannel == static_cast<uint8_t>(songChannel)) {
       if (voice.gateTicksRemaining > 0) {
         sendNoteOff(voice);
       }

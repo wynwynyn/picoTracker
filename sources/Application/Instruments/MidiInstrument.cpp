@@ -8,13 +8,13 @@
  */
 
 #include "MidiInstrument.h"
-#include "MidiDelayEngine.h"
 #include "Application/Model/Scale.h"
 #include "Application/Player/Player.h"
 #include "Application/Utils/char.h"
 #include "CommandList.h"
 #include "Externals/etl/include/etl/string_stream.h"
 #include "Externals/etl/include/etl/to_string.h"
+#include "MidiDelayEngine.h"
 #include "Services/Midi/MidiMessage.h"
 #include "System/Console/Trace.h"
 
