@@ -85,6 +85,7 @@ public:
   bool GetStopAtEnd() { return stopAtEnd_; }
 
   void ProcessCommands();
+  void ProcessEarlyMidiDelayCommands(int channel);
   bool ProcessChannelCommand(int channel, FourCC cmd, ushort param);
 
   void StartStreaming(const char *name, int startSample = 0);
