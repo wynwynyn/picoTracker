@@ -203,6 +203,11 @@ void Player::Start(PlayMode mode, bool forceSongMode, MixerServiceMode msmMode,
   }
 
   ProcessCommands();
+  for (int i = 0; i < SONG_CHANNEL_COUNT; i++) {
+    if (mixer_.IsChannelPlaying(i)) {
+      ProcessEarlyMidiDelayCommands(i);
+    }
+  }
 
   startTime_ = mixer_.GetAudioOut()->GetStreamTime();
 
@@ -652,15 +657,25 @@ void Player::ProcessPhraseCommand(int channel, FourCC cc, ushort param,
     return;
   }
 
-  if (cc != FourCC::InstrumentCommandMidiCC &&
-      cc != FourCC::InstrumentCommandMidiPC &&
-      cc != FourCC::InstrumentCommandVolume) {
-    return;
-  }
-
   MidiInstrument *midi = ResolvePhraseMidiInstrument(phraseInstrIndex);
+  if (midi == nullptr && (cc == FourCC::InstrumentCommandMidiDelayRepeat ||
+                          cc == FourCC::InstrumentCommandMidiDelayTranspose)) {
+    I_Instrument *last = mixer_.GetLastInstrument(channel);
+    if (last != nullptr && last->GetType() == IT_MIDI) {
+      midi = static_cast<MidiInstrument *>(last);
+    }
+  }
   if (midi != nullptr) {
-    midi->SendMidiOutputCommand(cc, param);
+    if (cc == FourCC::InstrumentCommandMidiDelayRepeat ||
+        cc == FourCC::InstrumentCommandMidiDelayTranspose) {
+      midi->ProcessCommand(channel, cc, param);
+      return;
+    }
+    if (cc == FourCC::InstrumentCommandMidiCC ||
+        cc == FourCC::InstrumentCommandMidiPC ||
+        cc == FourCC::InstrumentCommandVolume) {
+      midi->SendMidiOutputCommand(cc, param);
+    }
   }
 }
 

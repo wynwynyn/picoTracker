@@ -57,6 +57,10 @@ bool MidiInstrument::Init() {
 void MidiInstrument::OnStart() {
   tableState_.Reset();
 
+  delayRepeatCount_ = 0;
+  delayInterval_ = 1;
+  delayTranspose_ = 0;
+
   // Send program change message at the start of playback
   int program = program_.GetInt();
 
