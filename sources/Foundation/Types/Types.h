@@ -45,7 +45,7 @@ struct FourCC {
     InstrumentCommandVolume = 69,              // VOLM
     InstrumentCommandNone = 45,                // ----
     InstrumentCommandMidiChord = 143,
-    InstrumentCommandMidiDelayRepeat = 188,   // MDR
+    InstrumentCommandMidiDelayRepeat = 188,    // MDR
     InstrumentCommandMidiDelayTranspose = 189, // MPT
 
     SampleInstrumentCrushVolume = 3,
