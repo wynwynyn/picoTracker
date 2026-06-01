@@ -552,6 +552,7 @@ void Player::Update(Observable &o, I_ObservableData *d) {
     for (int i = 0; i < SONG_CHANNEL_COUNT; i++) {
       if (timeToStart_[i] > 0) {
         if (--timeToStart_[i] == 0) {
+          ProcessEarlyMidiDelayCommands(i);
           playCursorPosition(i);
         }
       }
@@ -586,6 +587,7 @@ void Player::Update(Observable &o, I_ObservableData *d) {
         bool stopped = false;
         if (timeToLive_[i] > 0) {
           if (--timeToLive_[i] == 0) {
+            MidiDelayEngine::GetInstance().FlushChannel(i);
             mixer_.StopInstrument(i);
             stopped = true;
           }
@@ -667,6 +669,45 @@ void Player::ProcessPhraseCommand(int channel, FourCC cc, ushort param,
         Check if there's any command to trigger at current playing
         position for all channels
  ************************************************************/
+
+void Player::ProcessEarlyMidiDelayCommands(int channel) {
+
+  if (viewData_->playMode_ == PM_AUDITION) {
+    return;
+  }
+
+  if (!mixer_.IsChannelPlaying(channel)) {
+    return;
+  }
+
+  Groove *gs = Groove::GetInstance();
+  if (!gs->TriggerChannel(channel)) {
+    return;
+  }
+
+  uchar phrase = viewData_->currentPlayPhrase_[channel];
+  if (phrase == 0xFF) {
+    return;
+  }
+
+  int pos = viewData_->phrasePlayPos_[channel];
+  int stepIndex = Phrase::GetStepOffset(phrase, pos);
+  uchar phraseInstr = viewData_->song_->phrase_.instr_[stepIndex];
+
+  FourCC cc = viewData_->song_->phrase_.cmd1_[stepIndex];
+  if (cc == FourCC::InstrumentCommandMidiDelayRepeat ||
+      cc == FourCC::InstrumentCommandMidiDelayTranspose) {
+    ProcessPhraseCommand(
+        channel, cc, viewData_->song_->phrase_.param1_[stepIndex], phraseInstr);
+  }
+
+  cc = viewData_->song_->phrase_.cmd2_[stepIndex];
+  if (cc == FourCC::InstrumentCommandMidiDelayRepeat ||
+      cc == FourCC::InstrumentCommandMidiDelayTranspose) {
+    ProcessPhraseCommand(
+        channel, cc, viewData_->song_->phrase_.param2_[stepIndex], phraseInstr);
+  }
+}
 
 void Player::ProcessCommands() {
 
@@ -855,6 +896,15 @@ void Player::playCursorPosition(int channel) {
     int stepIndex = Phrase::GetStepOffset(currentPhrase, pos);
     unsigned char note = phrase->note_[stepIndex];
     unsigned char instr = phrase->instr_[stepIndex];
+
+    FourCC cc = phrase->cmd1_[stepIndex];
+    if (cc == FourCC::InstrumentCommandKill) {
+      ProcessChannelCommand(channel, cc, phrase->param1_[stepIndex]);
+    }
+    cc = phrase->cmd2_[stepIndex];
+    if (cc == FourCC::InstrumentCommandKill) {
+      ProcessChannelCommand(channel, cc, phrase->param2_[stepIndex]);
+    }
 
     TableHolder *th = TableHolder::GetInstance();
     TablePlayback &tpb = TablePlayback::GetTablePlayback(channel);
