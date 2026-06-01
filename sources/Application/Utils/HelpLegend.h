@@ -123,7 +123,7 @@ static char **getHelpLegend(FourCC command) {
     break;
   case FourCC::InstrumentCommandMidiDelayRepeat:
     result[0] = (char *)("MIDI Delay: xxyy");
-    result[1] = (char *)("xx repeats (00=off), yy gap");
+    result[1] = (char *)("xx rpts 00=off+flush, yy gap");
     break;
   case FourCC::InstrumentCommandMidiDelayTranspose:
     result[0] = (char *)("MIDI Transpose: --bb");
