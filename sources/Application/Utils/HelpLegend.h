@@ -121,6 +121,14 @@ static char **getHelpLegend(FourCC command) {
     result[0] = (char *)("MIDI Chord:abcd");
     result[1] = (char *)("send rel notes:+a,+b,+c,+d");
     break;
+  case FourCC::InstrumentCommandMidiDelayRepeat:
+    result[0] = (char *)("MIDI Delay: xxyy");
+    result[1] = (char *)("xx repeats (00=off), yy gap");
+    break;
+  case FourCC::InstrumentCommandMidiDelayTranspose:
+    result[0] = (char *)("MIDI Transpose: --bb");
+    result[1] = (char *)("st/repeat: 01=up, FF=down");
+    break;
   default:
     result[0] = result[1] = (char *)("");
     break;
