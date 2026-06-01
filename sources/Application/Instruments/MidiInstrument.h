@@ -104,6 +104,13 @@ private:
   bool pitchBend_;
   bool useLogCurve_;
 
+  uint8_t delayRepeatCount_ = 0;
+  uint8_t delayInterval_ = 1;
+  int8_t delayTranspose_ = 0;
+
+  void spawnDelayChain(int songChannel, uint8_t note, uint8_t velocity);
+  uint8_t delayGateTicks() const;
+
   Variable channel_;
   Variable noteLen_;
   Variable volume_;

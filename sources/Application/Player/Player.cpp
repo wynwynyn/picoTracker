@@ -11,6 +11,7 @@
 #include "Application/Instruments/CommandList.h"
 #include "Application/Instruments/I_Instrument.h"
 #include "Application/Instruments/InstrumentBank.h"
+#include "Application/Instruments/MidiDelayEngine.h"
 #include "Application/Instruments/MidiInstrument.h"
 #include "Application/Instruments/SampleInstrument.h"
 #include "Application/Mixer/MixerService.h"
@@ -219,6 +220,7 @@ void Player::Stop() {
 
   bool keepAudioActive = mixer_.IsPlaying();
 
+  MidiDelayEngine::GetInstance().FlushAll();
   for (int i = 0; i < SONG_CHANNEL_COUNT; i++) {
     mixer_.StopChannel(i);
   }
@@ -555,6 +557,8 @@ void Player::Update(Observable &o, I_ObservableData *d) {
       }
     }
 
+    MidiDelayEngine::GetInstance().AdvanceTick();
+
     // Process commands in current phrase
     if (viewData_->playMode_ != PM_AUDITION)
       ProcessCommands();
@@ -702,6 +706,7 @@ bool Player::ProcessChannelCommand(int channel, FourCC cmd, ushort param) {
 
   switch (cmd) {
   case FourCC::InstrumentCommandKill:
+    MidiDelayEngine::GetInstance().FlushChannel(channel);
     if (instr) {
       int timeToLive = (param & 0xFF);
       timeToLive_[channel] = timeToLive + 1;
@@ -855,6 +860,7 @@ void Player::playCursorPosition(int channel) {
     TablePlayback &tpb = TablePlayback::GetTablePlayback(channel);
 
     if (note == NOTE_OFF) {
+      MidiDelayEngine::GetInstance().FlushChannel(channel);
       mixer_.StopInstrument(channel);
     } else if (note <= HIGHEST_NOTE) {
 
