@@ -10,7 +10,7 @@ Some features include:
 - [x] Able to set phrase lengths longer than 16 steps (phrase options screen)
     - involved memory refactor - moving things to SDRAM instead
 - [ ] 8 extra channels (maybe limited to MIDI only)
-- [ ] MIDI effects
+- [x] MIDI delay (MDR/MPT) — Phase 1 on `experiment-midi-delay-phase-1`
 - [ ] [options] key repeat delay
 - [ ] [options] default phrase length
 - [ ] [very experimental] Able to set table speed

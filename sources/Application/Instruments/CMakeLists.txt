@@ -4,6 +4,7 @@ add_library(application_instruments
   I_Instrument.cpp
   InstrumentBank.cpp
   InstrumentNameVariable.cpp
+  MidiDelayEngine.cpp
   MidiInstrument.cpp
   OpalInstrument.cpp
   NoneInstrument.cpp

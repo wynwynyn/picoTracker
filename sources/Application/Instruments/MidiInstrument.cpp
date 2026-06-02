@@ -14,6 +14,7 @@
 #include "CommandList.h"
 #include "Externals/etl/include/etl/string_stream.h"
 #include "Externals/etl/include/etl/to_string.h"
+#include "MidiDelayEngine.h"
 #include "Services/Midi/MidiMessage.h"
 #include "System/Console/Trace.h"
 
@@ -56,6 +57,10 @@ bool MidiInstrument::Init() {
 void MidiInstrument::OnStart() {
   tableState_.Reset();
 
+  delayRepeatCount_ = 0;
+  delayInterval_ = 1;
+  delayTranspose_ = 0;
+
   // Send program change message at the start of playback
   int program = program_.GetInt();
 
@@ -78,6 +83,24 @@ void MidiInstrument::OnStart() {
   svc_->RegisterActiveChannel(channel_.GetInt());
 };
 
+uint8_t MidiInstrument::delayGateTicks() const {
+  int len = noteLen_.GetInt();
+  if (len <= 0) {
+    return 1;
+  }
+  return static_cast<uint8_t>(len);
+}
+
+void MidiInstrument::spawnDelayChain(int songChannel, uint8_t note,
+                                     uint8_t velocity) {
+  if (delayRepeatCount_ == 0) {
+    return;
+  }
+  MidiDelayEngine::GetInstance().SpawnChain(
+      songChannel, channel_.GetInt(), note, velocity, delayRepeatCount_,
+      delayInterval_, delayTranspose_, delayGateTicks());
+}
+
 bool MidiInstrument::Start(int c, unsigned char note, bool retrigger) {
 
   first_[c] = true;
@@ -98,6 +121,8 @@ bool MidiInstrument::Start(int c, unsigned char note, bool retrigger) {
   retrig_ = false;
   pitchBend_ = false;
   useLogCurve_ = false;
+
+  spawnDelayChain(c, note, static_cast<uint8_t>(velocity_));
 
   return true;
 };
@@ -308,6 +333,22 @@ void MidiInstrument::ProcessCommand(int channel, FourCC cc, ushort value) {
     velocity_ = value & 0x7F;
   }; break;
 
+  case FourCC::InstrumentCommandMidiDelayRepeat: {
+    uint8_t count = static_cast<uint8_t>((value >> 8) & 0xFF);
+    uint8_t interval = static_cast<uint8_t>(value & 0xFF);
+    if (count == 0) {
+      delayRepeatCount_ = 0;
+      MidiDelayEngine::GetInstance().FlushChannel(channel);
+    } else {
+      delayRepeatCount_ = count;
+      delayInterval_ = (interval == 0) ? 1 : interval;
+    }
+  } break;
+
+  case FourCC::InstrumentCommandMidiDelayTranspose: {
+    delayTranspose_ = MidiDelayEngine::ParseSignedTransposeByte(value);
+  } break;
+
   case FourCC::InstrumentCommandMidiChord: {
     // split into 4 note offsets
     for (int i = 0; i < MAX_MIDI_CHORD_NOTES; i++) {
@@ -339,10 +380,12 @@ void MidiInstrument::ProcessCommand(int channel, FourCC cc, ushort value) {
         msg.data2_ = velocity_;
         // Trace::Debug("MIDI chord note ON[%d]: %d", i, msg.data1_);
         svc_->QueueMessage(msg);
+        spawnDelayChain(channel, note, static_cast<uint8_t>(velocity_));
       }
     }
   }; break;
   case FourCC::InstrumentCommandKill: {
+    MidiDelayEngine::GetInstance().FlushChannel(channel);
     Stop(channel);
   }; break;
   }

@@ -28,6 +28,8 @@ static FourCC _all[] = {
     FourCC::InstrumentCommandLoopOfset,
     FourCC::InstrumentCommandMidiCC,
     FourCC::InstrumentCommandMidiChord,
+    FourCC::InstrumentCommandMidiDelayRepeat,
+    FourCC::InstrumentCommandMidiDelayTranspose,
     FourCC::InstrumentCommandMidiPC,
     FourCC::InstrumentCommandPan,
     FourCC::InstrumentCommandPitchFineTune,
