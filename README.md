@@ -9,7 +9,7 @@ Some features include:
 - [x] Sending `MPC` commands without having to trigger a note
 - [x] Able to set phrase lengths longer than 16 steps (phrase options screen)
     - involved memory refactor - moving things to SDRAM instead
-- [ ] 8 extra channels (maybe limited to MIDI only)
+- [x] 8 extra channels (16 total on ADV; horizontal song scroll, mixer page flip)
 - [ ] MIDI effects
 - [ ] [options] key repeat delay
 - [ ] [options] default phrase length

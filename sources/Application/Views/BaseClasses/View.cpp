@@ -182,7 +182,8 @@ void View::drawNotes() {
   Player *player = Player::GetInstance();
 
   props.invert_ = true;
-  for (int i = 0; i < SONG_CHANNEL_COUNT; i++) {
+  for (int vis = 0; vis < SONG_VISIBLE_COL_COUNT; vis++) {
+    const int i = viewData_->songChannelOffset_ + vis;
     if (i == viewData_->songX_) {
       SetColor(CD_HILITE2);
     } else {
