@@ -8,6 +8,7 @@
  */
 
 #include "ViewData.h"
+#include "Application/Model/Table.h"
 #include "BaseClasses/View.h"
 
 ViewData::ViewData(Project *project) { Load(project); };
@@ -30,6 +31,9 @@ void ViewData::Load(Project *project) {
   playMode_ = PM_SONG;
   phraseOffset_ = 0;
   phraseCurPos_ = 0;
+  tableOffset_ = 0;
+  tableCurPos_ = 0;
+  lastTableView_ = VT_TABLE;
 
   for (int i = 0; i < SONG_CHANNEL_COUNT; i++) {
     songPlayPos_[i] = 0;
@@ -183,6 +187,52 @@ void ViewData::checkPhraseBoundaries(int &visibleRow) {
 
   if (visibleRow >= len - phraseOffset_) {
     visibleRow = len - phraseOffset_ - 1;
+  }
+  if (visibleRow < 0) {
+    visibleRow = 0;
+  }
+}
+
+void ViewData::UpdateTableRow(int &visibleRow, int dy) {
+  visibleRow += dy;
+  checkTableBoundaries(visibleRow);
+  tableCurPos_ = tableOffset_ + visibleRow;
+}
+
+int ViewData::GetAbsoluteTableStep(int visibleRow) const {
+  return tableOffset_ + visibleRow;
+}
+
+void ViewData::ClampTableEditorCursor() {
+  int visibleRow = tableCurPos_ - tableOffset_;
+  checkTableBoundaries(visibleRow);
+  tableCurPos_ = tableOffset_ + visibleRow;
+}
+
+void ViewData::checkTableBoundaries(int &visibleRow) {
+  const int visibleRows = View::songRowCount_;
+  const int len =
+      TableHolder::GetInstance()->GetTable(currentTable_).GetLength();
+
+  if (visibleRow < 0) {
+    tableOffset_ += visibleRow;
+    visibleRow = 0;
+  }
+  if (visibleRow > visibleRows - 1) {
+    tableOffset_ += visibleRow - visibleRows + 1;
+    visibleRow = visibleRows - 1;
+  }
+
+  const int maxOffset = len - visibleRows;
+  if (tableOffset_ > maxOffset) {
+    tableOffset_ = maxOffset;
+  }
+  if (tableOffset_ < 0) {
+    tableOffset_ = 0;
+  }
+
+  if (visibleRow >= len - tableOffset_) {
+    visibleRow = len - tableOffset_ - 1;
   }
   if (visibleRow < 0) {
     visibleRow = 0;

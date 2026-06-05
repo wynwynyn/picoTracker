@@ -59,6 +59,7 @@ private:
   GUIPoint cmdEditPos_;
   UIBigHexVarField cmdEditField_;
   void printHelpLegend(FourCC command, GUITextProperties props);
+  int absoluteStep(int visibleRow) const;
 
   struct clipboard {
     bool active_;
@@ -66,12 +67,12 @@ private:
     int row_;
     int width_;
     int height_;
-    uchar cmd1_[16];
-    ushort param1_[16];
-    uchar cmd2_[16];
-    ushort param2_[16];
-    uchar cmd3_[16];
-    ushort param3_[16];
+    uchar cmd1_[TABLE_STEPS];
+    ushort param1_[TABLE_STEPS];
+    uchar cmd2_[TABLE_STEPS];
+    ushort param2_[TABLE_STEPS];
+    uchar cmd3_[TABLE_STEPS];
+    ushort param3_[TABLE_STEPS];
   } clipboard_;
 
   int saveCol_;
