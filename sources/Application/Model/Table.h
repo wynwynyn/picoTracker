@@ -16,15 +16,13 @@
 
 #ifdef ADV
 #define TABLE_COUNT 0x80
+#else
+#define TABLE_COUNT 0x20
+#endif
+
 #define MIN_TABLE_STEPS 16
 #define MAX_TABLE_STEPS 128
 #define LEGACY_TABLE_STEPS 16
-#else
-#define TABLE_COUNT 0x20
-#define MIN_TABLE_STEPS 16
-#define MAX_TABLE_STEPS 16
-#define LEGACY_TABLE_STEPS 16
-#endif
 
 #define TABLE_STEPS MAX_TABLE_STEPS
 #define TABLE_COLUMNS 3

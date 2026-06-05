@@ -125,10 +125,8 @@ void TableHolder::SaveContent(tinyxml2::XMLPrinter *printer) {
 
     Table &table = tables()[i];
     if (!table.IsEmpty()) {
-#ifdef ADV
       hex2char(table.GetLength(), hex);
       printer->PushAttribute("LENGTH", hex);
-#endif
       saveHexBuffer(printer, "CMD1", table.cmd1_, TABLE_STEPS);
       saveHexBuffer(printer, "PARAM1", table.param1_, TABLE_STEPS);
       saveHexBuffer(printer, "CMD2", table.cmd2_, TABLE_STEPS);
@@ -155,21 +153,17 @@ void TableHolder::RestoreContent(PersistencyDocument *doc) {
           unsigned char b2 = c2h__(doc->attrval_[1]);
           id = b1 + b2;
         }
-#ifdef ADV
         if (!strcmp(doc->attrname_, "LENGTH")) {
           unsigned char b1 = (c2h__(doc->attrval_[0])) << 4;
           unsigned char b2 = c2h__(doc->attrval_[1]);
           length = b1 + b2;
         }
-#endif
         attr = doc->NextAttribute();
       }
 
       Table &table = tables()[id];
       table.Reset();
-#ifdef ADV
       table.SetLength(length);
-#endif
 
       bool subelem = doc->FirstChild();
       while (subelem) {
