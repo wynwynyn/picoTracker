@@ -17,6 +17,7 @@ add_library(application_views
   SelectProjectView.cpp
   SongView.cpp
   TableView.cpp
+  TableSettingsView.cpp
   ThemeView.cpp
   UIController.cpp
   ViewData.cpp

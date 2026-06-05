@@ -20,6 +20,7 @@
 Table::Table() { Reset(); };
 
 void Table::Reset() {
+  length_ = LEGACY_TABLE_STEPS;
   for (int i = 0; i < TABLE_STEPS; i++) {
     cmd1_[i] = FourCC::InstrumentCommandNone;
     param1_[i] = 0;
@@ -30,7 +31,29 @@ void Table::Reset() {
   }
 };
 
+uchar Table::GetLength() const {
+  uchar len = length_;
+  if (len < MIN_TABLE_STEPS) {
+    return MIN_TABLE_STEPS;
+  }
+  if (len > MAX_TABLE_STEPS) {
+    return MAX_TABLE_STEPS;
+  }
+  return len;
+}
+
+void Table::SetLength(uchar length) {
+  if (length < MIN_TABLE_STEPS) {
+    length = MIN_TABLE_STEPS;
+  }
+  if (length > MAX_TABLE_STEPS) {
+    length = MAX_TABLE_STEPS;
+  }
+  length_ = length;
+}
+
 void Table::Copy(const Table &other) {
+  length_ = other.length_;
   for (int i = 0; i < TABLE_STEPS; i++) {
     cmd1_[i] = *(other.cmd1_ + i);
     param1_[i] = *(other.param1_ + i);
@@ -81,12 +104,10 @@ bool *TableHolder::allocations() { return allocation_; }
 TableHolder::TableHolder() : Persistent("TABLES") { Reset(); }
 
 void TableHolder::Reset() {
-  for (int i = 0; i < SONG_CHANNEL_COUNT; i++) {
-    tables()[i].Reset();
-  }
   for (int i = 0; i < TABLE_COUNT; i++) {
+    tables()[i].Reset();
     allocations()[i] = false;
-  };
+  }
 };
 
 Table &TableHolder::GetTable(int table) {
@@ -104,7 +125,8 @@ void TableHolder::SaveContent(tinyxml2::XMLPrinter *printer) {
 
     Table &table = tables()[i];
     if (!table.IsEmpty()) {
-      //      TiXmlNode *dataNode = node->InsertEndChild(data);
+      hex2char(table.GetLength(), hex);
+      printer->PushAttribute("LENGTH", hex);
       saveHexBuffer(printer, "CMD1", table.cmd1_, TABLE_STEPS);
       saveHexBuffer(printer, "PARAM1", table.param1_, TABLE_STEPS);
       saveHexBuffer(printer, "CMD2", table.cmd2_, TABLE_STEPS);
@@ -122,21 +144,26 @@ void TableHolder::RestoreContent(PersistencyDocument *doc) {
   while (elem) {
     // Check it is a table
     if (!strcmp(doc->ElemName(), "TABLE")) {
-      // Get the table ID
       unsigned char id = '\0';
+      uchar length = LEGACY_TABLE_STEPS;
       bool attr = doc->NextAttribute();
       while (attr) {
         if (!strcmp(doc->attrname_, "ID")) {
           unsigned char b1 = (c2h__(doc->attrval_[0])) << 4;
           unsigned char b2 = c2h__(doc->attrval_[1]);
           id = b1 + b2;
-          // found what we wanted
-          break;
+        }
+        if (!strcmp(doc->attrname_, "LENGTH")) {
+          unsigned char b1 = (c2h__(doc->attrval_[0])) << 4;
+          unsigned char b2 = c2h__(doc->attrval_[1]);
+          length = b1 + b2;
         }
         attr = doc->NextAttribute();
       }
 
       Table &table = tables()[id];
+      table.Reset();
+      table.SetLength(length);
 
       bool subelem = doc->FirstChild();
       while (subelem) {

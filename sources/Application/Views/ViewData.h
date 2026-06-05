@@ -38,9 +38,14 @@ public:
   int GetAbsolutePhraseStep(int visibleRow) const;
   void ClampPhraseEditorCursor();
 
+  void UpdateTableRow(int &visibleRow, int dy);
+  int GetAbsoluteTableStep(int visibleRow) const;
+  void ClampTableEditorCursor();
+
 protected:
   void checkSongBoundaries();
   void checkPhraseBoundaries(int &visibleRow);
+  void checkTableBoundaries(int &visibleRow);
 
   inline void updateData(unsigned char *c, int offset, unsigned char limit,
                          bool wrap) {
@@ -95,6 +100,9 @@ public:
                                           // channel
   int phraseOffset_;                      // top visible step in phrase editor
   int phraseCurPos_;                      // absolute phrase step under cursor
+
+  int tableOffset_; // top visible step in table editor
+  int tableCurPos_; // absolute table step under cursor
 
   // Sample Editor
   etl::string<MAX_INSTRUMENT_FILENAME_LENGTH> sampleEditorFilename;

@@ -35,6 +35,7 @@
 #include "Application/Views/SampleSlicesView.h"
 #include "Application/Views/SelectProjectView.h"
 #include "Application/Views/SongView.h"
+#include "Application/Views/TableSettingsView.h"
 #include "Application/Views/TableView.h"
 #include "Application/Views/ThemeImportView.h"
 #include "Application/Views/ThemeView.h"
@@ -106,6 +107,7 @@ struct AppWindowViews {
   InstrumentImportView instrumentImportView;
   InstrumentView instrumentView;
   TableView tableView;
+  TableSettingsView tableSettingsView;
   GrooveView grooveView;
   SelectProjectView selectProjectView;
   MixerView mixerView;
@@ -121,10 +123,10 @@ struct AppWindowViews {
         themeImportView(w, &viewData), projectView(w, &viewData),
         importView(w, &viewData), instrumentImportView(w, &viewData),
         instrumentView(w, &viewData), tableView(w, &viewData),
-        grooveView(w, &viewData), selectProjectView(w, &viewData),
-        mixerView(w, &viewData), sampleEditorView(w, &viewData),
-        sampleSlicesView(w, &viewData), recordView(w, &viewData),
-        nullView(w, &viewData) {}
+        tableSettingsView(w, &viewData), grooveView(w, &viewData),
+        selectProjectView(w, &viewData), mixerView(w, &viewData),
+        sampleEditorView(w, &viewData), sampleSlicesView(w, &viewData),
+        recordView(w, &viewData), nullView(w, &viewData) {}
 };
 
 void AppWindow::defineColor(FourCC colorCode, GUIColor &color,
@@ -199,6 +201,7 @@ AppWindow::AppWindow(I_GUIWindowImp &imp, const char *projectName)
   views_->instrumentImportView.AddObserver(*this);
   views_->instrumentView.AddObserver(*this);
   views_->tableView.AddObserver(*this);
+  views_->tableSettingsView.AddObserver(*this);
   views_->grooveView.AddObserver(*this);
   views_->selectProjectView.AddObserver(*this);
   views_->mixerView.AddObserver(*this);
@@ -494,6 +497,7 @@ AppWindow::LoadProjectResult AppWindow::LoadProject(const char *projectName) {
     views_->chainView.Reset();
     views_->phraseView.Reset();
     views_->phraseSettingsView.Reset();
+    views_->tableSettingsView.Reset();
     views_->grooveView.Reset();
     views_->tableView.Reset();
     views_->projectView.Reset();
@@ -858,6 +862,9 @@ void AppWindow::Update(Observable &o, I_ObservableData *d) {
       break;
     case VT_TABLE2:
       _currentView = &views_->tableView;
+      break;
+    case VT_TABLE_SETTINGS:
+      _currentView = &views_->tableSettingsView;
       break;
     case VT_GROOVE:
       _currentView = &views_->grooveView;
