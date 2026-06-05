@@ -18,6 +18,17 @@
 
 #define CHANNELS_X_OFFSET_ 3 // stride between each channel
 
+static const FourCC kChannelVolumeFourCCs[16] = {
+    FourCC::VarChannel1Volume,  FourCC::VarChannel2Volume,
+    FourCC::VarChannel3Volume,  FourCC::VarChannel4Volume,
+    FourCC::VarChannel5Volume,  FourCC::VarChannel6Volume,
+    FourCC::VarChannel7Volume,  FourCC::VarChannel8Volume,
+    FourCC::VarChannel9Volume,  FourCC::VarChannel10Volume,
+    FourCC::VarChannel11Volume, FourCC::VarChannel12Volume,
+    FourCC::VarChannel13Volume, FourCC::VarChannel14Volume,
+    FourCC::VarChannel15Volume, FourCC::VarChannel16Volume,
+};
+
 MixerView::MixerView(GUIWindow &w, ViewData *viewData)
     : FieldView(w, viewData) {
 
@@ -38,13 +49,15 @@ void MixerView::Reset() {
 }
 
 void MixerView::OnFocus() {
-  // update selected field to match current cursor position
   if (viewData_->songX_ <= SONG_CHANNEL_COUNT) {
     if (viewData_->songX_ < SONG_CHANNEL_COUNT) {
-      // Channel 0-7
-      SetFocus((UIField *)&channelVolumeFields_.at(viewData_->songX_));
+      const int fieldIndex = viewData_->songX_ - viewData_->mixerChannelOffset_;
+      if (fieldIndex >= 0 && fieldIndex < SONG_VISIBLE_COL_COUNT) {
+        SetFocus((UIField *)&channelVolumeFields_.at(fieldIndex));
+      } else if (!channelVolumeFields_.empty()) {
+        SetFocus((UIField *)&channelVolumeFields_.at(0));
+      }
     } else {
-      // Master channel
       SetFocus((UIField *)&masterVolumeField_.at(0));
     }
   }
@@ -59,9 +72,9 @@ void MixerView::SetFocus(UIField *field) {
     return;
 
   // Check if it's one of the channel volume fields
-  for (int i = 0; i < SONG_CHANNEL_COUNT; i++) {
+  for (int i = 0; i < SONG_VISIBLE_COL_COUNT; i++) {
     if (field == (UIField *)&channelVolumeFields_.at(i)) {
-      viewData_->songX_ = i;
+      viewData_->songX_ = viewData_->mixerChannelOffset_ + i;
       return;
     }
   }
@@ -88,8 +101,12 @@ void MixerView::updateCursor(int dx, int dy) {
 
   // Update field focus to match the selected channel
   if (x < SONG_CHANNEL_COUNT) {
-    // Channel 0-7
-    SetFocus(&channelVolumeFields_[x]);
+    const int fieldIndex = x - viewData_->mixerChannelOffset_;
+    if (fieldIndex >= 0 && fieldIndex < SONG_VISIBLE_COL_COUNT) {
+      SetFocus(&channelVolumeFields_[fieldIndex]);
+    } else if (!channelVolumeFields_.empty()) {
+      SetFocus(&channelVolumeFields_[0]);
+    }
   } else {
     // Master channel
     SetFocus(&masterVolumeField_[0]);
@@ -134,28 +151,19 @@ void MixerView::ProcessButtonMask(unsigned short mask, bool pressed) {
         switchSoloMode();
       }
     };
-    // Force a full redraw of the mixer view
     SetDirty(true);
     return;
   };
 
-  // First check if we need to handle special mixer-specific actions
-  if (!pressed) {
-    if (viewMode_ == VM_MUTEON) {
-      if (mask & EPBM_NAV) {
-        toggleMute();
-      }
-    };
-    if (viewMode_ == VM_SOLOON) {
-      if (mask & EPBM_NAV) {
-        switchSoloMode();
-      }
-    };
+  if ((mask & EPBM_EDIT) && (mask & EPBM_LEFT)) {
+    flipMixerPage(-1);
     return;
-  };
+  }
+  if ((mask & EPBM_EDIT) && (mask & EPBM_RIGHT)) {
+    flipMixerPage(1);
+    return;
+  }
 
-  // Ignore up/down arrow keys when pressed by themselves in MixerView
-  // We only want left/right to navigate between channels
   if (mask == EPBM_UP || mask == EPBM_DOWN) {
     return;
   }
@@ -284,43 +292,27 @@ void MixerView::initChannelVolumeFields() {
   if (!project)
     return;
 
-  // Position for volume fields - below VU meters
   GUIPoint position = GetAnchor();
-  position._y += VU_METER_HEIGHT + 1; // Position below VU meters
+  position._y += VU_METER_HEIGHT + 1;
 
-  // Get FourCC codes for channel volumes
-  FourCC channelVolumeFourCCs[SONG_CHANNEL_COUNT] = {
-      FourCC::VarChannel1Volume, FourCC::VarChannel2Volume,
-      FourCC::VarChannel3Volume, FourCC::VarChannel4Volume,
-      FourCC::VarChannel5Volume, FourCC::VarChannel6Volume,
-      FourCC::VarChannel7Volume, FourCC::VarChannel8Volume};
-
-  // Clear any existing fields
   channelVolumeFields_.clear();
+  fieldList_.clear();
+  masterVolumeField_.clear();
 
-  for (int i = 0; i < SONG_CHANNEL_COUNT; i++) {
-    // Create position for this channel's volume field
+  for (int i = 0; i < SONG_VISIBLE_COL_COUNT; i++) {
+    const int channel = viewData_->mixerChannelOffset_ + i;
     GUIPoint fieldPos = position;
     fieldPos._x = position._x + (i * CHANNELS_X_OFFSET_);
 
-    // Find the variable for this channel's volume
-    Variable *v = project->FindVariable(channelVolumeFourCCs[i]);
+    Variable *v = project->FindVariable(kChannelVolumeFourCCs[channel]);
     if (v) {
-      // Create a 2-digit field (00-99) for the channel volume
-      // NOTE: 99 is considered "unity" gain
-      // Format: %2.2d = 2-digit decimal number with leading zeros
-      // Use xOffset=1 and yOffset=5 for small/large increments
       channelVolumeFields_.emplace_back(fieldPos, *v, "%2.2d", 0, 99, 1, 5);
-
-      // Add the field to the fieldList_ for proper field navigation
       fieldList_.insert(fieldList_.end(), &(*channelVolumeFields_.rbegin()));
     }
   }
 
-  // Add master volume field to the right of channel volumes
   GUIPoint masterPos = position;
-  // Position to the right of channel volumes
-  masterPos._x += (SONG_CHANNEL_COUNT * CHANNELS_X_OFFSET_);
+  masterPos._x += (SONG_VISIBLE_COL_COUNT * CHANNELS_X_OFFSET_);
 
   Variable *v = project->FindVariable(FourCC::VarMasterVolume);
   if (v) {
@@ -328,10 +320,38 @@ void MixerView::initChannelVolumeFields() {
     fieldList_.insert(fieldList_.end(), &(*masterVolumeField_.begin()));
   }
 
-  // Set focus to the first field if we have any fields
   if (!fieldList_.empty()) {
     SetFocus(*fieldList_.begin());
   }
+}
+
+void MixerView::flipMixerPage(int direction) {
+  const int maxOffset = SONG_CHANNEL_COUNT - SONG_VISIBLE_COL_COUNT;
+  int newOffset =
+      viewData_->mixerChannelOffset_ + direction * SONG_VISIBLE_COL_COUNT;
+  if (newOffset < 0) {
+    newOffset = 0;
+  }
+  if (newOffset > maxOffset) {
+    newOffset = maxOffset;
+  }
+  if (newOffset == viewData_->mixerChannelOffset_) {
+    return;
+  }
+
+  viewData_->mixerChannelOffset_ = newOffset;
+  initChannelVolumeFields();
+
+  if (viewData_->songX_ < SONG_CHANNEL_COUNT) {
+    const int fieldIndex = viewData_->songX_ - viewData_->mixerChannelOffset_;
+    if (fieldIndex >= 0 && fieldIndex < SONG_VISIBLE_COL_COUNT) {
+      SetFocus(&channelVolumeFields_[fieldIndex]);
+    } else if (!channelVolumeFields_.empty()) {
+      SetFocus(&channelVolumeFields_[0]);
+    }
+  }
+
+  isDirty_ = true;
 }
 
 void MixerView::DrawView() {
@@ -369,7 +389,8 @@ void MixerView::DrawView() {
   pos._y = anchor._y + VU_METER_HEIGHT + 2; // Position below volume fields
   pos._x = GetTitlePosition()._x;
 
-  for (int i = 0; i < SONG_CHANNEL_COUNT; i++) {
+  for (int vis = 0; vis < SONG_VISIBLE_COL_COUNT; vis++) {
+    const int i = viewData_->mixerChannelOffset_ + vis;
     if (i == viewData_->songX_) {
       props.invert_ = true;
       SetColor(CD_HILITE2);
@@ -395,7 +416,7 @@ void MixerView::DrawView() {
   // Draw master volume label
   GUIPoint labelPos = GetAnchor();
   // Align with master volume control
-  labelPos._x += (SONG_CHANNEL_COUNT * CHANNELS_X_OFFSET_);
+  labelPos._x += (SONG_VISIBLE_COL_COUNT * CHANNELS_X_OFFSET_);
   labelPos._y = SCREEN_HEIGHT - 3; // Position below the volume control
   SetColor(CD_HILITE2);
   DrawString(labelPos._x, labelPos._y, "MB", props);
@@ -474,12 +495,11 @@ void MixerView::drawChannelVUMeters(
   // This saves CPU cycles by avoiding unnecessary drawing operations
   if (!forceRedraw) {
     bool anyChanges = false;
-    for (int i = 0; i < SONG_CHANNEL_COUNT; i++) {
-      // Convert amplitude to bar levels
+    for (int vis = 0; vis < SONG_VISIBLE_COL_COUNT; vis++) {
+      const int i = viewData_->mixerChannelOffset_ + vis;
       int32_t leftBars, rightBars;
       amplitudeToBars(levels->at(i), &leftBars, &rightBars);
 
-      // Check if this channel's levels have changed
       if (leftBars != prevLeftVU_[i + 1] || rightBars != prevRightVU_[i + 1]) {
         anyChanges = true;
         break;
@@ -497,16 +517,14 @@ void MixerView::drawChannelVUMeters(
   pos._y += VU_METER_HEIGHT - 1; // -1 to align with song grid
 
   // draw vu meter for each bus
-  for (int i = 0; i < SONG_CHANNEL_COUNT; i++) {
+  for (int vis = 0; vis < SONG_VISIBLE_COL_COUNT; vis++) {
+    const int i = viewData_->mixerChannelOffset_ + vis;
     int32_t leftBars = 0;
     int32_t rightBars = 0;
-    // if channel is muted just use default 0 values for bars
     if (!player->IsChannelMuted(i)) {
-      // Convert amplitude to bar levels
       amplitudeToBars(levels->at(i), &leftBars, &rightBars);
     }
 
-    // Use index i+1 for channel VU meters (index 0 is reserved for master)
     drawVUMeter(leftBars, rightBars, pos, props, i + 1, forceRedraw);
     pos._x += CHANNELS_X_OFFSET_;
   }

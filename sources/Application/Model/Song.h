@@ -15,7 +15,8 @@
 #include "Phrase.h"
 
 #ifdef ADV
-#define SONG_CHANNEL_COUNT 8
+#define SONG_CHANNEL_COUNT 16
+#define SONG_VISIBLE_COL_COUNT 8
 #define SONG_ROW_COUNT 256
 
 #define MAX_SAMPLEINSTRUMENT_COUNT 0x40
@@ -27,6 +28,7 @@
 #define MAX_INSTRUMENT_COUNT 0x40
 #else
 #define SONG_CHANNEL_COUNT 8
+#define SONG_VISIBLE_COL_COUNT 8
 #define SONG_ROW_COUNT 128
 
 #define MAX_SAMPLEINSTRUMENT_COUNT 0x10
@@ -46,6 +48,9 @@
 #define NO_NOTE 0xFF
 #define NOTE_C3 60
 #define EMPTY_SONG_VALUE 0xFF
+
+#define STREAM_MIX_BUS SONG_CHANNEL_COUNT
+#define MAX_BUS_COUNT (SONG_CHANNEL_COUNT + 1)
 
 class Song : Persistent {
 public:

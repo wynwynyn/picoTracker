@@ -50,6 +50,14 @@ Project::Project(const char *name)
       channelVolume6_(FourCC::VarChannel6Volume, DEFAULT_CHANNEL_VOLUME),
       channelVolume7_(FourCC::VarChannel7Volume, DEFAULT_CHANNEL_VOLUME),
       channelVolume8_(FourCC::VarChannel8Volume, DEFAULT_CHANNEL_VOLUME),
+      channelVolume9_(FourCC::VarChannel9Volume, DEFAULT_CHANNEL_VOLUME),
+      channelVolume10_(FourCC::VarChannel10Volume, DEFAULT_CHANNEL_VOLUME),
+      channelVolume11_(FourCC::VarChannel11Volume, DEFAULT_CHANNEL_VOLUME),
+      channelVolume12_(FourCC::VarChannel12Volume, DEFAULT_CHANNEL_VOLUME),
+      channelVolume13_(FourCC::VarChannel13Volume, DEFAULT_CHANNEL_VOLUME),
+      channelVolume14_(FourCC::VarChannel14Volume, DEFAULT_CHANNEL_VOLUME),
+      channelVolume15_(FourCC::VarChannel15Volume, DEFAULT_CHANNEL_VOLUME),
+      channelVolume16_(FourCC::VarChannel16Volume, DEFAULT_CHANNEL_VOLUME),
       wrap_(FourCC::VarWrap, false), transpose_(FourCC::VarTranspose, 0),
       scale_(FourCC::VarScale, scaleNames, numScales, 0),
       scaleRoot_(FourCC::VarScaleRoot, noteNames, 12, 0),
@@ -73,6 +81,14 @@ Project::Project(const char *name)
   this->variables_.insert(variables_.end(), &channelVolume6_);
   this->variables_.insert(variables_.end(), &channelVolume7_);
   this->variables_.insert(variables_.end(), &channelVolume8_);
+  this->variables_.insert(variables_.end(), &channelVolume9_);
+  this->variables_.insert(variables_.end(), &channelVolume10_);
+  this->variables_.insert(variables_.end(), &channelVolume11_);
+  this->variables_.insert(variables_.end(), &channelVolume12_);
+  this->variables_.insert(variables_.end(), &channelVolume13_);
+  this->variables_.insert(variables_.end(), &channelVolume14_);
+  this->variables_.insert(variables_.end(), &channelVolume15_);
+  this->variables_.insert(variables_.end(), &channelVolume16_);
 
   this->variables_.insert(variables_.end(), &wrap_);
   this->variables_.insert(variables_.end(), &transpose_);
@@ -121,6 +137,14 @@ void Project::Load(const char *name) {
   channelVolume6_.Reset();
   channelVolume7_.Reset();
   channelVolume8_.Reset();
+  channelVolume9_.Reset();
+  channelVolume10_.Reset();
+  channelVolume11_.Reset();
+  channelVolume12_.Reset();
+  channelVolume13_.Reset();
+  channelVolume14_.Reset();
+  channelVolume15_.Reset();
+  channelVolume16_.Reset();
   wrap_.Reset();
   transpose_.Reset();
   scale_.Reset();
@@ -180,6 +204,22 @@ int Project::GetChannelVolume(int channel) {
     return channelVolume7_.GetInt();
   case 7:
     return channelVolume8_.GetInt();
+  case 8:
+    return channelVolume9_.GetInt();
+  case 9:
+    return channelVolume10_.GetInt();
+  case 10:
+    return channelVolume11_.GetInt();
+  case 11:
+    return channelVolume12_.GetInt();
+  case 12:
+    return channelVolume13_.GetInt();
+  case 13:
+    return channelVolume14_.GetInt();
+  case 14:
+    return channelVolume15_.GetInt();
+  case 15:
+    return channelVolume16_.GetInt();
   default:
     NAssert(false);
     return 0;

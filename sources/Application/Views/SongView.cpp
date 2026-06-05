@@ -198,12 +198,12 @@ void SongView::clonePosition() {
 
 void SongView::extendSelection() {
   GUIRect rect = getSelectionRect();
-  if (rect.Left() > 0 || rect.Right() < 7) {
+  if (rect.Left() > 0 || rect.Right() < SONG_CHANNEL_COUNT - 1) {
     if (viewData_->songX_ < clipboard_.x_) {
       viewData_->songX_ = 0;
-      clipboard_.x_ = 7;
+      clipboard_.x_ = SONG_CHANNEL_COUNT - 1;
     } else {
-      viewData_->songX_ = 7;
+      viewData_->songX_ = SONG_CHANNEL_COUNT - 1;
       clipboard_.x_ = 0;
     }
     isDirty_ = true;
@@ -227,11 +227,11 @@ void SongView::extendSelection() {
 void SongView::OnFocus() {
   clipboard_.active_ = false;
 
-  // eg. if the user was in master channel in mixerview and came to songview
-  // we need to make sure we're not outside channel range
+  // eg. if the user was on master in mixerview and came to songview
   if (viewData_->songX_ > SONG_CHANNEL_COUNT - 1) {
-    viewData_->songX_ = 0; // default to channel 1
+    viewData_->songX_ = 0;
   }
+  viewData_->ClampSongEditorCursor();
 };
 
 GUIRect SongView::getSelectionRect() {
@@ -444,7 +444,7 @@ void SongView::onStart() {
 void SongView::startCurrentRow() {
   Player *player = Player::GetInstance();
   player->SetSequencerMode(SM_LIVE);
-  player->OnSongStartButton(0, 7, false, false);
+  player->OnSongStartButton(0, SONG_CHANNEL_COUNT - 1, false, false);
 }
 
 void SongView::startImmediate() {
@@ -865,15 +865,17 @@ void SongView::DrawView() {
   SetColor(CD_NORMAL);
 
   pos = anchor;
-  unsigned char *data =
-      viewData_->song_->data_ + (SONG_CHANNEL_COUNT * viewData_->songOffset_);
   short dx = 3;
   short dy = 1;
   for (int j = 0; j < View::songRowCount_; j++) {
 
     pos._x = anchor._x;
+    unsigned char *data = viewData_->song_->data_ +
+                          viewData_->songChannelOffset_ +
+                          SONG_CHANNEL_COUNT * (viewData_->songOffset_ + j);
 
-    for (int i = 0; i < SONG_CHANNEL_COUNT; i++) {
+    for (int vis = 0; vis < SONG_VISIBLE_COL_COUNT; vis++) {
+      const int i = viewData_->songChannelOffset_ + vis;
 
       bool invert = false;
 
@@ -999,12 +1001,17 @@ void SongView::AnimationUpdate() {
     // Handle position updates
     GUIPoint anchor = GetAnchor();
     GUIPoint pos = anchor;
-    pos._x -= 1;
 
     SetColor(CD_CURSOR);
 
     // Loop on all channels
     for (int i = 0; i < SONG_CHANNEL_COUNT; i++) {
+      const int visibleCol = i - viewData_->songChannelOffset_;
+      if (visibleCol < 0 || visibleCol >= SONG_VISIBLE_COL_COUNT) {
+        continue;
+      }
+      pos._x = anchor._x + visibleCol * 3 - 1;
+
       // Clear all current positions
       int y = lastPlayedPosition_[i] - viewData_->songOffset_;
       if (y >= 0 && y < View::songRowCount_) {
@@ -1051,7 +1058,6 @@ void SongView::AnimationUpdate() {
           }
         }
       }
-      pos._x += 3;
     }
 
     // Create a memory barrier to ensure proper synchronization between cores

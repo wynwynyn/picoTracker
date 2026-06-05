@@ -23,6 +23,8 @@ void ViewData::Load(Project *project) {
   songX_ = 0;
   songY_ = 0;
   songOffset_ = 0;
+  songChannelOffset_ = 0;
+  mixerChannelOffset_ = 0;
   chainCol_ = 0;
   chainRow_ = 0;
   currentTable_ = 0;
@@ -71,11 +73,38 @@ void ViewData::UpdateSongCursor(int dx, int dy) {
   checkSongBoundaries();
 }
 
+void ViewData::ClampSongEditorCursor() { checkSongBoundaries(); }
+
 void ViewData::checkSongBoundaries() {
-  if (songX_ > SONG_CHANNEL_COUNT - 1)
-    songX_ = SONG_CHANNEL_COUNT - 1;
-  if (songX_ < 0)
-    songX_ = 0;
+  int visibleCol = songX_ - songChannelOffset_;
+  const int visibleCols = SONG_VISIBLE_COL_COUNT;
+
+  if (visibleCol < 0) {
+    songChannelOffset_ += visibleCol;
+    visibleCol = 0;
+  }
+  if (visibleCol > visibleCols - 1) {
+    songChannelOffset_ += visibleCol - visibleCols + 1;
+    visibleCol = visibleCols - 1;
+  }
+
+  const int maxChannelOffset = SONG_CHANNEL_COUNT - visibleCols;
+  if (songChannelOffset_ > maxChannelOffset) {
+    songChannelOffset_ = maxChannelOffset;
+  }
+  if (songChannelOffset_ < 0) {
+    songChannelOffset_ = 0;
+  }
+
+  if (visibleCol >= SONG_CHANNEL_COUNT - songChannelOffset_) {
+    visibleCol = SONG_CHANNEL_COUNT - songChannelOffset_ - 1;
+  }
+  if (visibleCol < 0) {
+    visibleCol = 0;
+  }
+
+  songX_ = songChannelOffset_ + visibleCol;
+
   if (songY_ < 0) {
     songOffset_ += songY_;
     songY_ = 0;

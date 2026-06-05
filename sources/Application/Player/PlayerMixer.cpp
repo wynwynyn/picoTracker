@@ -132,7 +132,7 @@ etl::array<stereosample, SONG_CHANNEL_COUNT> *PlayerMixer::GetMixerLevels() {
   MixerService *ms = MixerService::GetInstance();
 
   // Get the current mixer levels from each bus
-  for (int i = 0; i < 8; i++) {
+  for (int i = 0; i < SONG_CHANNEL_COUNT; i++) {
     AudioMixer *audioMixer = ms->GetMixBus(i);
     mixerLevels_[i] = audioMixer->GetMixerLevels();
   }

@@ -25,6 +25,7 @@ public:
   unsigned char UpdateSongChain(int offset);
   void UpdateSongOffset(int offset);
   void UpdateSongCursor(int dx, int dy);
+  void ClampSongEditorCursor();
   void SetSongChain(unsigned char);
   unsigned char *GetCurrentSongPointer();
 
@@ -69,12 +70,13 @@ public:
 
   // Editor settings
 
-  int songX_;      // .Current song screen position in the editor
-  int songY_;      //
-  int songOffset_; // .Current song offset (top screen row) in editor
-
-  int chainRow_; // .Current row in chain editor
-  int chainCol_; // .Current column in chain editor
+  int songX_;              // .Current song screen position in the editor
+  int songY_;              //
+  int songOffset_;         // .Current song offset (top screen row) in editor
+  int songChannelOffset_;  // left visible channel in song editor
+  int mixerChannelOffset_; // left visible channel on mixer page
+  int chainRow_;           // .Current row in chain editor
+  int chainCol_;           // .Current column in chain editor
 
   int currentChain_;  // .Current edited chain
   int currentPhrase_; // .Current edited phrase

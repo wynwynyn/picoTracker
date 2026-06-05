@@ -11,6 +11,7 @@
 #define _MIXER_SERVICE_H_
 
 #include "Application/Commands/ApplicationCommandDispatcher.h" // Would be better done externally and call an API here
+#include "Application/Model/Song.h"
 #include "Foundation/Observable.h"
 #include "Foundation/T_Singleton.h"
 #include "MixBus.h"
@@ -23,8 +24,6 @@ enum MixerServiceMode {
   MSM_FILE,
   MSM_FILESPLIT,
 };
-
-#define MAX_BUS_COUNT 10
 
 class MixerService : public T_Singleton<MixerService>,
                      public Observable,
