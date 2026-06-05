@@ -133,7 +133,7 @@ public:
   virtual void DrawView() = 0;
   virtual void OnPlayerUpdate(PlayerEventType, unsigned int currentTick) = 0;
   virtual void OnFocus() = 0;
-  virtual void OnFocusLost() {};
+  virtual void OnFocusLost(){};
   virtual void AnimationUpdate() = 0;
 
   void SetDirty(bool dirty);

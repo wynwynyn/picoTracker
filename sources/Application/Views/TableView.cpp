@@ -667,7 +667,6 @@ void TableView::processNormalButtonMask(unsigned short mask) {
       SetChanged();
       NotifyObservers(&ve);
     }
-#ifdef ADV
     if (mask & EPBM_DOWN) {
       TableSettingsView::SetSourceViewType(viewType_);
       ViewType vt = VT_TABLE_SETTINGS;
@@ -675,7 +674,6 @@ void TableView::processNormalButtonMask(unsigned short mask) {
       SetChanged();
       NotifyObservers(&ve);
     }
-#endif
     if (mask & EPBM_LEFT) {
       if (viewType_ == VT_TABLE2) {
         ViewType vt = VT_TABLE;
