@@ -865,7 +865,8 @@ void SongView::DrawView() {
   SetColor(CD_NORMAL);
 
   pos = anchor;
-  unsigned char *data = viewData_->song_->data_ + viewData_->songChannelOffset_ +
+  unsigned char *data = viewData_->song_->data_ +
+                        viewData_->songChannelOffset_ +
                         SONG_CHANNEL_COUNT * viewData_->songOffset_;
   short dx = 3;
   short dy = 1;
