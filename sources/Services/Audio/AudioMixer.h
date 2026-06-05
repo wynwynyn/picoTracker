@@ -11,6 +11,7 @@
 #define _AUDIO_MIXER_H_
 
 #include "Application/Instruments/WavFileWriter.h"
+#include "Application/Model/Song.h"
 #include "AudioModule.h"
 #include "Externals/etl/include/etl/string.h"
 #include "Externals/etl/include/etl/vector.h"
@@ -38,7 +39,7 @@ private:
   WavFileWriter writer_;
   fixed volume_;
   etl::string<12> name_;
-  static constexpr size_t MaxModules = 10;
+  static constexpr size_t MaxModules = MAX_BUS_COUNT;
   etl::vector<AudioModule *, MaxModules> modules_;
 
   // hold the avg volume of a buffer worth of samples for each audiomodule in
