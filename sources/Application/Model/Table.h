@@ -16,10 +16,17 @@
 
 #ifdef ADV
 #define TABLE_COUNT 0x80
+#define MIN_TABLE_STEPS 16
+#define MAX_TABLE_STEPS 128
+#define LEGACY_TABLE_STEPS 16
 #else
 #define TABLE_COUNT 0x20
+#define MIN_TABLE_STEPS 16
+#define MAX_TABLE_STEPS 16
+#define LEGACY_TABLE_STEPS 16
 #endif
-#define TABLE_STEPS 16
+
+#define TABLE_STEPS MAX_TABLE_STEPS
 #define TABLE_COLUMNS 3
 
 #define NO_MORE_TABLE TABLE_COUNT + 10
@@ -31,6 +38,9 @@ public:
   bool IsEmpty();
   void Copy(const Table &other);
 
+  uchar GetLength() const;
+  void SetLength(uchar length);
+
 public:
   FourCC cmd1_[TABLE_STEPS];
   ushort param1_[TABLE_STEPS];
@@ -38,6 +48,9 @@ public:
   ushort param2_[TABLE_STEPS];
   FourCC cmd3_[TABLE_STEPS];
   ushort param3_[TABLE_STEPS];
+
+private:
+  uchar length_;
 };
 
 class TableHolder : public T_Singleton<TableHolder>, Persistent {
