@@ -865,14 +865,14 @@ void SongView::DrawView() {
   SetColor(CD_NORMAL);
 
   pos = anchor;
-  unsigned char *data = viewData_->song_->data_ +
-                        viewData_->songChannelOffset_ +
-                        SONG_CHANNEL_COUNT * viewData_->songOffset_;
   short dx = 3;
   short dy = 1;
   for (int j = 0; j < View::songRowCount_; j++) {
 
     pos._x = anchor._x;
+    unsigned char *data = viewData_->song_->data_ +
+                          viewData_->songChannelOffset_ +
+                          SONG_CHANNEL_COUNT * (viewData_->songOffset_ + j);
 
     for (int vis = 0; vis < SONG_VISIBLE_COL_COUNT; vis++) {
       const int i = viewData_->songChannelOffset_ + vis;
