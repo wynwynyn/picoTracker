@@ -7,48 +7,46 @@
  * This file is part of the picoTracker firmware
  */
 
-#include "PhraseSettingsView.h"
-#include "Application/Model/Phrase.h"
+#include "TableSettingsView.h"
+#include "Application/Model/Table.h"
 #include "ViewData.h"
 #include <Application/AppWindow.h>
 #include <nanoprintf.h>
 
-PhraseSettingsView::PhraseSettingsView(GUIWindow &w, ViewData *viewData)
+ViewType TableSettingsView::sourceViewType_ = VT_TABLE;
+
+TableSettingsView::TableSettingsView(GUIWindow &w, ViewData *viewData)
     : ScreenView(w, viewData), lengthFocused_(false) {}
 
-PhraseSettingsView::~PhraseSettingsView() {}
+TableSettingsView::~TableSettingsView() {}
 
-void PhraseSettingsView::Reset() { lengthFocused_ = false; }
+void TableSettingsView::Reset() { lengthFocused_ = false; }
 
-void PhraseSettingsView::updateLength(int delta) {
-  Phrase &phrase = viewData_->song_->phrase_;
-  uchar length = phrase.GetLength(viewData_->currentPhrase_);
+void TableSettingsView::SetSourceViewType(ViewType vt) { sourceViewType_ = vt; }
+
+void TableSettingsView::updateLength(int delta) {
+  Table &table = TableHolder::GetInstance()->GetTable(viewData_->currentTable_);
+  uchar length = table.GetLength();
   int next = static_cast<int>(length) + delta;
-  if (next < MIN_STEPS_PER_PHRASE) {
-    next = MIN_STEPS_PER_PHRASE;
+  if (next < MIN_TABLE_STEPS) {
+    next = MIN_TABLE_STEPS;
   }
-  if (next > MAX_STEPS_PER_PHRASE) {
-    next = MAX_STEPS_PER_PHRASE;
+  if (next > MAX_TABLE_STEPS) {
+    next = MAX_TABLE_STEPS;
   }
-  phrase.SetLength(viewData_->currentPhrase_, static_cast<uchar>(next));
-  viewData_->ClampPhraseEditorCursor();
+  table.SetLength(static_cast<uchar>(next));
+  viewData_->ClampTableEditorCursor();
   isDirty_ = true;
 }
 
-void PhraseSettingsView::ProcessButtonMask(unsigned short mask, bool pressed) {
+void TableSettingsView::ProcessButtonMask(unsigned short mask, bool pressed) {
   if (!pressed) {
     return;
   }
 
   if (mask & EPBM_NAV) {
-    if (mask & EPBM_DOWN) {
-      ViewType vt = VT_PHRASE;
-      ViewEvent ve(VET_SWITCH_VIEW, &vt);
-      SetChanged();
-      NotifyObservers(&ve);
-    }
     if (mask & EPBM_UP) {
-      ViewType vt = VT_GROOVE;
+      ViewType vt = sourceViewType_;
       ViewEvent ve(VET_SWITCH_VIEW, &vt);
       SetChanged();
       NotifyObservers(&ve);
@@ -80,7 +78,7 @@ void PhraseSettingsView::ProcessButtonMask(unsigned short mask, bool pressed) {
   }
 }
 
-void PhraseSettingsView::DrawView() {
+void TableSettingsView::DrawView() {
   Clear();
 
   GUITextProperties props;
@@ -88,17 +86,19 @@ void PhraseSettingsView::DrawView() {
   SetColor(CD_NORMAL);
 
   char title[SCREEN_WIDTH + 1];
-  npf_snprintf(title, sizeof(title), "Phrase %2.2X Settings",
-               viewData_->currentPhrase_);
+  npf_snprintf(title, sizeof(title), "Table %2.2X Settings",
+               viewData_->currentTable_);
   DrawString(pos._x, pos._y, title, props);
 
   GUIPoint anchor = GetAnchor();
   pos = anchor;
 
-  uchar length = viewData_->song_->phrase_.GetLength(viewData_->currentPhrase_);
+  uchar length = TableHolder::GetInstance()
+                     ->GetTable(viewData_->currentTable_)
+                     .GetLength();
   char line[SCREEN_WIDTH + 1];
   props.invert_ = lengthFocused_;
-  npf_snprintf(line, sizeof(line), "Length: %2u",
+  npf_snprintf(line, sizeof(line), "Length: %3u",
                static_cast<unsigned>(length));
   DrawString(pos._x, pos._y, line, props);
 
@@ -106,7 +106,7 @@ void PhraseSettingsView::DrawView() {
   drawNotes();
 }
 
-void PhraseSettingsView::OnFocus() {
+void TableSettingsView::OnFocus() {
   lengthFocused_ = true;
   isDirty_ = true;
 }

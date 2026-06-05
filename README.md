@@ -14,7 +14,7 @@ Some features include:
 - [ ] [options] key repeat delay
 - [ ] [options] default phrase length
 - [ ] [very experimental] Able to set table speed
-- [ ] [very experimental] Able to set table lengths
+- [x] [very experimental] Able to set table lengths
 - [ ] [very experimental] Chain tables together (trigger `TBL` from tables)
 
 These features will only be tested on pTA, because pT probably doesn't have enough resources spare.

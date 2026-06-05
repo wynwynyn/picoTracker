@@ -50,6 +50,7 @@ enum ViewType {
   VT_INSTRUMENT,
   VT_TABLE,  // Table screen under phrase
   VT_TABLE2, // Table screen under instrument
+  VT_TABLE_SETTINGS,
   VT_GROOVE,
   VT_MIXER,
   VT_IMPORT,            // Sample file import
