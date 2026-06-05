@@ -24,7 +24,11 @@ enum MixerServiceMode {
   MSM_FILESPLIT,
 };
 
+#ifdef ADV
+#define MAX_BUS_COUNT 17
+#else
 #define MAX_BUS_COUNT 10
+#endif
 
 class MixerService : public T_Singleton<MixerService>,
                      public Observable,
