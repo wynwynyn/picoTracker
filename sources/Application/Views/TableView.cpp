@@ -13,6 +13,7 @@
 #include "Application/Utils/HelpLegend.h"
 #include "Application/Utils/char.h"
 #include "Application/Views/SampleEditorView.h"
+#include "Application/Views/TableSettingsView.h"
 #include "ViewData.h"
 #include <nanoprintf.h>
 
@@ -668,7 +669,7 @@ void TableView::processNormalButtonMask(unsigned short mask) {
     }
 #ifdef ADV
     if (mask & EPBM_DOWN) {
-      viewData_->lastTableView_ = viewType_;
+      TableSettingsView::SetSourceViewType(viewType_);
       ViewType vt = VT_TABLE_SETTINGS;
       ViewEvent ve(VET_SWITCH_VIEW, &vt);
       SetChanged();

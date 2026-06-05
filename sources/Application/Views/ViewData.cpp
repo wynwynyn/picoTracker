@@ -33,7 +33,6 @@ void ViewData::Load(Project *project) {
   phraseCurPos_ = 0;
   tableOffset_ = 0;
   tableCurPos_ = 0;
-  lastTableView_ = VT_TABLE;
 
   for (int i = 0; i < SONG_CHANNEL_COUNT; i++) {
     songPlayPos_[i] = 0;

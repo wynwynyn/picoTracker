@@ -11,7 +11,6 @@
 #define _VIEW_DATA_
 
 #include "Application/Model/Project.h"
-#include "Application/Views/BaseClasses/ViewEvent.h"
 #include "System/Console/Trace.h"
 
 enum PlayMode { PM_SONG, PM_CHAIN, PM_PHRASE, PM_LIVE, PM_AUDITION };
@@ -102,9 +101,8 @@ public:
   int phraseOffset_;                      // top visible step in phrase editor
   int phraseCurPos_;                      // absolute phrase step under cursor
 
-  int tableOffset_;        // top visible step in table editor
-  int tableCurPos_;        // absolute table step under cursor
-  ViewType lastTableView_; // table view to return to from settings
+  int tableOffset_; // top visible step in table editor
+  int tableCurPos_; // absolute table step under cursor
 
   // Sample Editor
   etl::string<MAX_INSTRUMENT_FILENAME_LENGTH> sampleEditorFilename;
