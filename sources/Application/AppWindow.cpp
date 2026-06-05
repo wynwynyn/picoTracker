@@ -201,6 +201,7 @@ AppWindow::AppWindow(I_GUIWindowImp &imp, const char *projectName)
   views_->instrumentImportView.AddObserver(*this);
   views_->instrumentView.AddObserver(*this);
   views_->tableView.AddObserver(*this);
+  views_->tableSettingsView.AddObserver(*this);
   views_->grooveView.AddObserver(*this);
   views_->selectProjectView.AddObserver(*this);
   views_->mixerView.AddObserver(*this);
