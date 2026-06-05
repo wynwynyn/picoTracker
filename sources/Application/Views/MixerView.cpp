@@ -51,8 +51,7 @@ void MixerView::Reset() {
 void MixerView::OnFocus() {
   if (viewData_->songX_ <= SONG_CHANNEL_COUNT) {
     if (viewData_->songX_ < SONG_CHANNEL_COUNT) {
-      const int fieldIndex =
-          viewData_->songX_ - viewData_->mixerChannelOffset_;
+      const int fieldIndex = viewData_->songX_ - viewData_->mixerChannelOffset_;
       if (fieldIndex >= 0 && fieldIndex < SONG_VISIBLE_COL_COUNT) {
         SetFocus((UIField *)&channelVolumeFields_.at(fieldIndex));
       } else if (!channelVolumeFields_.empty()) {
