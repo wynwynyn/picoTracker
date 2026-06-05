@@ -51,7 +51,7 @@ void TableView::Reset() {
   clipboard_.height_ = 0;
   clipboard_.col_ = 0;
   clipboard_.row_ = 0;
-  for (int i = 0; i < 16; i++) {
+  for (int i = 0; i < TABLE_STEPS; i++) {
     clipboard_.cmd1_[i] = 0;
     clipboard_.param1_[i] = 0;
     clipboard_.cmd2_[i] = 0;
@@ -74,8 +74,15 @@ void TableView::OnFocus() {
   clipboard_.active_ = false;
   viewMode_ = VM_NORMAL;
   lastPosition_[0] = lastPosition_[1] = lastPosition_[2] = 0xFF;
+  row_ = viewData_->tableCurPos_ - viewData_->tableOffset_;
+  viewData_->ClampTableEditorCursor();
+  row_ = viewData_->tableCurPos_ - viewData_->tableOffset_;
   updateCursor(0, 0);
 };
+
+int TableView::absoluteStep(int visibleRow) const {
+  return viewData_->GetAbsoluteTableStep(visibleRow);
+}
 
 void TableView::cutPosition() {
 
@@ -92,7 +99,8 @@ void TableView::cutPosition() {
 };
 
 GUIRect TableView::getSelectionRect() {
-  GUIRect r(clipboard_.col_, clipboard_.row_, col_, row_);
+  GUIRect r(clipboard_.col_, clipboard_.row_ + viewData_->tableOffset_, col_,
+            row_ + viewData_->tableOffset_);
   r.Normalize();
   return r;
 };
@@ -127,13 +135,14 @@ void TableView::fillClipboardData() {
   ushort *src6 = table.param3_;
   ushort *dst6 = clipboard_.param3_;
 
+  int absStart = viewData_->tableOffset_ + clipboard_.row_;
   for (int i = 0; i < clipboard_.height_; i++) {
-    dst1[i] = src1[clipboard_.row_ + i];
-    dst2[i] = src2[clipboard_.row_ + i];
-    dst3[i] = src3[clipboard_.row_ + i];
-    dst4[i] = src4[clipboard_.row_ + i];
-    dst5[i] = src5[clipboard_.row_ + i];
-    dst6[i] = src6[clipboard_.row_ + i];
+    dst1[i] = src1[absStart + i];
+    dst2[i] = src2[absStart + i];
+    dst3[i] = src3[absStart + i];
+    dst4[i] = src4[absStart + i];
+    dst5[i] = src5[absStart + i];
+    dst6[i] = src6[absStart + i];
   };
   updateCursor(0, 0);
 };
@@ -152,10 +161,10 @@ void TableView::extendSelection() {
   } else {
     if (row_ < clipboard_.row_) {
       row_ = 0;
-      clipboard_.row_ = 15;
+      clipboard_.row_ = View::songRowCount_ - 1;
     } else {
       clipboard_.row_ = 0;
-      row_ = 15;
+      row_ = View::songRowCount_ - 1;
     }
     isDirty_ = true;
   }
@@ -193,26 +202,27 @@ void TableView::cutSelection() {
   uchar *dst5 = (unsigned char *)table.cmd3_;
   ushort *dst6 = table.param3_;
 
+  int absStart = viewData_->tableOffset_ + clipboard_.row_;
   for (int i = 0; i < clipboard_.width_; i++) {
     for (int j = 0; j < clipboard_.height_; j++) {
       switch (i + clipboard_.col_) {
       case 0:
-        dst1[j + clipboard_.row_] = FourCC::InstrumentCommandNone;
+        dst1[j + absStart] = FourCC::InstrumentCommandNone;
         break;
       case 1:
-        dst2[j + clipboard_.row_] = 0x0000;
+        dst2[j + absStart] = 0x0000;
         break;
       case 2:
-        dst3[j + clipboard_.row_] = FourCC::InstrumentCommandNone;
+        dst3[j + absStart] = FourCC::InstrumentCommandNone;
         break;
       case 3:
-        dst4[j + clipboard_.row_] = 0x0000;
+        dst4[j + absStart] = 0x0000;
         break;
       case 4:
-        dst5[j + clipboard_.row_] = FourCC::InstrumentCommandNone;
+        dst5[j + absStart] = FourCC::InstrumentCommandNone;
         break;
       case 5:
-        dst6[j + clipboard_.row_] = 0x0000;
+        dst6[j + absStart] = 0x0000;
         break;
       }
     }
@@ -257,51 +267,54 @@ void TableView::pasteClipboard() {
   ushort *dst6 = table.param3_;
   ushort *src6 = clipboard_.param3_;
 
+  int tableLen = table.GetLength();
+  int absRow = absoluteStep(row_);
   for (int i = 0; i < clipboard_.width_; i++) {
     for (int j = 0; j < height; j++) {
+      int dest = (j + absRow) % tableLen;
       switch (i + clipboard_.col_) {
       case 0:
-        dst1[(j + row_) % 16] = src1[j];
+        dst1[dest] = src1[j];
         break;
       case 1:
-        dst2[(j + row_) % 16] = src2[j];
+        dst2[dest] = src2[j];
         break;
       case 2:
-        dst3[(j + row_) % 16] = src3[j];
+        dst3[dest] = src3[j];
         break;
       case 3:
-        dst4[(j + row_) % 16] = src4[j];
+        dst4[dest] = src4[j];
         break;
       case 4:
-        dst5[(j + row_) % 16] = src5[j];
+        dst5[dest] = src5[j];
         break;
       case 5:
-        dst6[(j + row_) % 16] = src6[j];
+        dst6[dest] = src6[j];
         break;
       }
     }
   }
-  int offset = (row_ + height) % 16 - row_;
+  int offset = ((absRow + height) % tableLen) - absRow;
   updateCursor(0x00, offset);
   isDirty_ = true;
 };
 
 void TableView::updateCursor(int dx, int dy) {
   col_ += dx;
-  row_ += dy;
   if (col_ > 5) {
     col_ = 5;
   }
   if (col_ < 0) {
     col_ = 0;
   }
-  if (row_ > 15) {
-    row_ = 15;
-  }
-  if (row_ < 0) {
-    row_ = 0;
+  if (dy != 0) {
+    int visibleRow = row_;
+    viewData_->UpdateTableRow(visibleRow, dy);
+    row_ = visibleRow;
+    viewData_->tableCurPos_ = viewData_->tableOffset_ + row_;
   }
   Table &table = TableHolder::GetInstance()->GetTable(viewData_->currentTable_);
+  int absStep = absoluteStep(row_);
 
   GUIPoint anchor = GetAnchor();
   GUIPoint p(anchor);
@@ -310,19 +323,19 @@ void TableView::updateCursor(int dx, int dy) {
     p._x += 4;
     p._y += row_;
     cmdEditField_.SetPosition(p);
-    cmdEdit_.SetInt(*(table.param1_ + row_));
+    cmdEdit_.SetInt(*(table.param1_ + absStep));
     break;
   case 3:
     p._x += 13;
     p._y += row_;
     cmdEditField_.SetPosition(p);
-    cmdEdit_.SetInt(*(table.param2_ + row_));
+    cmdEdit_.SetInt(*(table.param2_ + absStep));
     break;
   case 5:
     p._x += 22;
     p._y += row_;
     cmdEditField_.SetPosition(p);
-    cmdEdit_.SetInt(*(table.param3_ + row_));
+    cmdEdit_.SetInt(*(table.param3_ + absStep));
     break;
   };
 
@@ -340,6 +353,9 @@ void TableView::warpToNeighbour(int dir) {
     current += TABLE_COUNT;
   }
   viewData_->currentTable_ = current;
+  viewData_->tableOffset_ = 0;
+  viewData_->tableCurPos_ = 0;
+  row_ = 0;
   updateCursor(0, 0);
   isDirty_ = true;
 }
@@ -353,9 +369,10 @@ void TableView::updateCursorValue(int offset) {
 
   Table &table = TableHolder::GetInstance()->GetTable(viewData_->currentTable_);
 
+  int absStep = absoluteStep(row_);
   switch (col_) {
   case 0:
-    cc = table.cmd1_ + row_;
+    cc = table.cmd1_ + absStep;
     switch (offset) {
     case 0x01:
       *cc = CommandList::GetNext(*cc);
@@ -401,16 +418,16 @@ void TableView::updateCursorValue(int offset) {
       break;
     }
     // Sanitize MIDI velocity values if needed
-    FourCC currentCmd = *(table.cmd1_ + row_);
+    FourCC currentCmd = *(table.cmd1_ + absStep);
     ushort paramValue = cmdEdit_.GetInt();
     paramValue = CommandList::RangeLimitCommandParam(currentCmd, paramValue);
     cmdEdit_.SetInt(paramValue);
-    *(table.param1_ + row_) = paramValue;
+    *(table.param1_ + absStep) = paramValue;
     lastParam_ = paramValue;
     break;
   }
   case 2: {
-    cc = table.cmd2_ + row_;
+    cc = table.cmd2_ + absStep;
     switch (offset) {
     case 0x01:
       *cc = CommandList::GetNext(*cc);
@@ -456,16 +473,16 @@ void TableView::updateCursorValue(int offset) {
       break;
     }
     // Sanitize MIDI velocity values if needed
-    FourCC currentCmd = *(table.cmd2_ + row_);
+    FourCC currentCmd = *(table.cmd2_ + absStep);
     ushort paramValue = cmdEdit_.GetInt();
     paramValue = CommandList::RangeLimitCommandParam(currentCmd, paramValue);
     cmdEdit_.SetInt(paramValue);
-    *(table.param2_ + row_) = paramValue;
+    *(table.param2_ + absStep) = paramValue;
     lastParam_ = paramValue;
     break;
   }
   case 4: {
-    cc = table.cmd3_ + row_;
+    cc = table.cmd3_ + absStep;
     switch (offset) {
     case 0x01:
       *cc = CommandList::GetNext(*cc);
@@ -511,11 +528,11 @@ void TableView::updateCursorValue(int offset) {
       break;
     }
     // Sanitize MIDI velocity values if needed
-    FourCC currentCmd = *(table.cmd3_ + row_);
+    FourCC currentCmd = *(table.cmd3_ + absStep);
     ushort paramValue = cmdEdit_.GetInt();
     paramValue = CommandList::RangeLimitCommandParam(currentCmd, paramValue);
     cmdEdit_.SetInt(paramValue);
-    *(table.param3_ + row_) = paramValue;
+    *(table.param3_ + absStep) = paramValue;
     lastParam_ = paramValue;
     break;
   }
@@ -542,9 +559,10 @@ void TableView::pasteLast() {
 
   Table &table = TableHolder::GetInstance()->GetTable(viewData_->currentTable_);
 
+  int absStep = absoluteStep(row_);
   switch (col_) {
   case 0:
-    c = (unsigned char *)table.cmd1_ + row_;
+    c = (unsigned char *)table.cmd1_ + absStep;
     if (*c == FourCC::InstrumentCommandNone) {
       *c = lastCmd_;
       isDirty_ = true;
@@ -557,7 +575,7 @@ void TableView::pasteLast() {
     break;
 
   case 2:
-    c = (unsigned char *)table.cmd2_ + row_;
+    c = (unsigned char *)table.cmd2_ + absStep;
     if (*c == FourCC::InstrumentCommandNone) {
       *c = lastCmd_;
       isDirty_ = true;
@@ -570,7 +588,7 @@ void TableView::pasteLast() {
     break;
 
   case 4:
-    c = (unsigned char *)table.cmd3_ + row_;
+    c = (unsigned char *)table.cmd3_ + absStep;
     if (*c == FourCC::InstrumentCommandNone) {
       *c = lastCmd_;
       isDirty_ = true;
@@ -648,6 +666,15 @@ void TableView::processNormalButtonMask(unsigned short mask) {
       SetChanged();
       NotifyObservers(&ve);
     }
+#ifdef ADV
+    if (mask & EPBM_DOWN) {
+      viewData_->lastTableView_ = viewType_;
+      ViewType vt = VT_TABLE_SETTINGS;
+      ViewEvent ve(VET_SWITCH_VIEW, &vt);
+      SetChanged();
+      NotifyObservers(&ve);
+    }
+#endif
     if (mask & EPBM_LEFT) {
       if (viewType_ == VT_TABLE2) {
         ViewType vt = VT_TABLE;
@@ -753,8 +780,9 @@ void TableView::setTextProps(GUITextProperties &props, int row, int col,
 
   if (clipboard_.active_) {
     GUIRect selRect = getSelectionRect();
+    const int absStep = viewData_->tableOffset_ + col;
     if ((row >= selRect.Left()) && (row <= selRect.Right()) &&
-        (col >= selRect.Top()) && (col <= selRect.Bottom())) {
+        (absStep >= selRect.Top()) && (absStep <= selRect.Bottom())) {
       invert = true;
     }
   } else {
@@ -799,9 +827,12 @@ void TableView::DrawView() {
   char buffer[6];
   pos = anchor;
   pos._x -= 3;
-  for (int j = 0; j < 16; j++) {
-    ((j / ALT_ROW_NUMBER) % 2) ? SetColor(CD_ACCENT) : SetColor(CD_ACCENTALT);
-    hex2char(j, buffer);
+  for (int j = 0; j < View::songRowCount_; j++) {
+    const unsigned char stepLabel =
+        static_cast<unsigned char>(viewData_->tableOffset_ + j);
+    ((stepLabel / ALT_ROW_NUMBER) % 2) ? SetColor(CD_ACCENT)
+                                       : SetColor(CD_ACCENTALT);
+    hex2char(stepLabel, buffer);
     DrawString(pos._x, pos._y, buffer, props);
     pos._y++;
   }
@@ -812,10 +843,8 @@ void TableView::DrawView() {
 
   pos = anchor;
 
-  FourCC *f = table.cmd1_;
-
-  for (int j = 0; j < 16; j++) {
-    FourCC command = *f++;
+  for (int j = 0; j < View::songRowCount_; j++) {
+    FourCC command = table.cmd1_[viewData_->tableOffset_ + j];
     setTextProps(props, 0, j, false);
     DrawString(pos._x, pos._y, command.c_str(), props);
     setTextProps(props, 0, j, true);
@@ -830,11 +859,10 @@ void TableView::DrawView() {
   pos = anchor;
   pos._x += 4;
 
-  ushort *param = table.param1_;
   buffer[5] = 0;
 
-  for (int j = 0; j < 16; j++) {
-    ushort p = *param++;
+  for (int j = 0; j < View::songRowCount_; j++) {
+    ushort p = table.param1_[viewData_->tableOffset_ + j];
     setTextProps(props, 1, j, false);
     hexshort2char(p, buffer);
     DrawString(pos._x, pos._y, buffer, props);
@@ -847,10 +875,8 @@ void TableView::DrawView() {
   pos = anchor;
   pos._x += 9;
 
-  f = table.cmd2_;
-
-  for (int j = 0; j < 16; j++) {
-    FourCC command = *f++;
+  for (int j = 0; j < View::songRowCount_; j++) {
+    FourCC command = table.cmd2_[viewData_->tableOffset_ + j];
     setTextProps(props, 2, j, false);
     DrawString(pos._x, pos._y, command.c_str(), props);
     setTextProps(props, 2, j, true);
@@ -865,11 +891,10 @@ void TableView::DrawView() {
   pos = anchor;
   pos._x += 13;
 
-  param = table.param2_;
   buffer[5] = 0;
 
-  for (int j = 0; j < 16; j++) {
-    ushort p = *param++;
+  for (int j = 0; j < View::songRowCount_; j++) {
+    ushort p = table.param2_[viewData_->tableOffset_ + j];
     setTextProps(props, 3, j, false);
     hexshort2char(p, buffer);
     DrawString(pos._x, pos._y, buffer, props);
@@ -882,10 +907,8 @@ void TableView::DrawView() {
   pos = anchor;
   pos._x += 18;
 
-  f = table.cmd3_;
-
-  for (int j = 0; j < 16; j++) {
-    FourCC command = *f++;
+  for (int j = 0; j < View::songRowCount_; j++) {
+    FourCC command = table.cmd3_[viewData_->tableOffset_ + j];
     setTextProps(props, 4, j, false);
     DrawString(pos._x, pos._y, command.c_str(), props);
     setTextProps(props, 4, j, true);
@@ -900,11 +923,10 @@ void TableView::DrawView() {
   pos = anchor;
   pos._x += 22;
 
-  param = table.param3_;
   buffer[5] = 0;
 
-  for (int j = 0; j < 16; j++) {
-    ushort p = *param++;
+  for (int j = 0; j < View::songRowCount_; j++) {
+    ushort p = table.param3_[viewData_->tableOffset_ + j];
     setTextProps(props, 5, j, false);
     hexshort2char(p, buffer);
     DrawString(pos._x, pos._y, buffer, props);
@@ -968,7 +990,7 @@ void TableView::AnimationUpdate() {
     // Clear all cursor columns first (positions 0, 9, 18 from anchor)
     for (int i = 0; i < 3; i++) {
       pos._x = anchor._x - 1 + (i * 9);
-      for (int row = 0; row < 16; row++) {
+      for (int row = 0; row < View::songRowCount_; row++) {
         pos._y = anchor._y + row;
         DrawString(pos._x, pos._y, " ", props);
       }
@@ -988,8 +1010,9 @@ void TableView::AnimationUpdate() {
         // Draw cursors at current positions
         SetColor(CD_ACCENT);
         for (int i = 0; i < 3; i++) {
-          int yPos = tpb.GetPlaybackPosition(i);
-          if (yPos >= 0 && yPos < 16) { // Only draw if position is valid
+          int playbackPos = tpb.GetPlaybackPosition(i);
+          int yPos = playbackPos - viewData_->tableOffset_;
+          if (yPos >= 0 && yPos < View::songRowCount_) {
             pos._x = anchor._x - 1 + (i * 9);
             pos._y = anchor._y + yPos;
             DrawString(pos._x, pos._y, ">", props);

@@ -40,29 +40,6 @@ enum GUIEventPadButtonMasks {
   EPBM_POWER = 1024,
 };
 
-enum ViewType {
-  VT_SONG,
-  VT_CHAIN,
-  VT_PHRASE,
-  VT_PHRASE_SETTINGS,
-  VT_PROJECT,
-  VT_DEVICE,
-  VT_INSTRUMENT,
-  VT_TABLE,  // Table screen under phrase
-  VT_TABLE2, // Table screen under instrument
-  VT_GROOVE,
-  VT_MIXER,
-  VT_IMPORT,            // Sample file import
-  VT_INSTRUMENT_IMPORT, // Instrument file import
-  VT_SELECTPROJECT,     // Select project
-  VT_THEME,             // Theme settings
-  VT_SELECTTHEME,       // Theme selection
-  VT_THEME_IMPORT,      // Theme file import
-  VT_SAMPLE_EDITOR,     // Sample Editor
-  VT_SAMPLE_SLICES,     // Sample slice editor
-  VT_RECORD             // Recording screen
-};
-
 enum ViewMode {
   VM_NORMAL,
   VM_NEW,
@@ -132,7 +109,7 @@ public:
   virtual void DrawView() = 0;
   virtual void OnPlayerUpdate(PlayerEventType, unsigned int currentTick) = 0;
   virtual void OnFocus() = 0;
-  virtual void OnFocusLost(){};
+  virtual void OnFocusLost() {};
   virtual void AnimationUpdate() = 0;
 
   void SetDirty(bool dirty);
