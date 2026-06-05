@@ -152,6 +152,11 @@ void View::drawMap() {
     pos._y += 3;
     DrawString(pos._x, pos._y, "T", props);
     break;
+  case VT_TABLE_SETTINGS:
+    pos._x += 3;
+    pos._y += 1;
+    DrawString(pos._x, pos._y, "L", props);
+    break;
   case VT_GROOVE:
     pos._x += 2;
     pos._y += 1;
