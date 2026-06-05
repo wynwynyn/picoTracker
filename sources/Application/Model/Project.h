@@ -75,7 +75,11 @@ public:
   virtual void RestoreContent(PersistencyDocument *doc);
 
 private:
+#ifdef ADV
+  etl::list<Variable *, 24> variables_;
+#else
   etl::list<Variable *, 16> variables_;
+#endif
 
 #ifdef ADV
   InstrumentBank &instrumentBank_;
@@ -101,6 +105,16 @@ private:
   Variable channelVolume6_;
   Variable channelVolume7_;
   Variable channelVolume8_;
+#ifdef ADV
+  Variable channelVolume9_;
+  Variable channelVolume10_;
+  Variable channelVolume11_;
+  Variable channelVolume12_;
+  Variable channelVolume13_;
+  Variable channelVolume14_;
+  Variable channelVolume15_;
+  Variable channelVolume16_;
+#endif
   Variable wrap_;
   Variable transpose_;
   Variable scale_;

@@ -216,6 +216,16 @@ struct FourCC {
     // 186 is taken for ActionAutoSlice
     // 187 is taken for ActionShowRecordView
 
+    // 187 is taken for ActionShowRecordView
+    // 188 is taken for VarChannel9Volume
+    // 189 is taken for VarChannel10Volume
+    // 190 is taken for VarChannel11Volume
+    // 191 is taken for VarChannel12Volume
+    // 192 is taken for VarChannel13Volume
+    // 193 is taken for VarChannel14Volume
+    // 194 is taken for VarChannel15Volume
+    // 195 is taken for VarChannel16Volume
+
     VarChannel1Volume = 163,
     VarChannel2Volume = 164,
     VarChannel3Volume = 165,
@@ -224,6 +234,14 @@ struct FourCC {
     VarChannel6Volume = 168,
     VarChannel7Volume = 169,
     VarChannel8Volume = 170,
+    VarChannel9Volume = 188,
+    VarChannel10Volume = 189,
+    VarChannel11Volume = 190,
+    VarChannel12Volume = 191,
+    VarChannel13Volume = 192,
+    VarChannel14Volume = 193,
+    VarChannel15Volume = 194,
+    VarChannel16Volume = 195,
     VarThemeName = 173, // Variable for storing the current theme name
 
     VarInstrumentType = 113,
@@ -408,6 +426,14 @@ struct FourCC {
   ETL_ENUM_TYPE(VarChannel6Volume, "channel6vol")
   ETL_ENUM_TYPE(VarChannel7Volume, "channel7vol")
   ETL_ENUM_TYPE(VarChannel8Volume, "channel8vol")
+  ETL_ENUM_TYPE(VarChannel9Volume, "channel9vol")
+  ETL_ENUM_TYPE(VarChannel10Volume, "channel10vol")
+  ETL_ENUM_TYPE(VarChannel11Volume, "channel11vol")
+  ETL_ENUM_TYPE(VarChannel12Volume, "channel12vol")
+  ETL_ENUM_TYPE(VarChannel13Volume, "channel13vol")
+  ETL_ENUM_TYPE(VarChannel14Volume, "channel14vol")
+  ETL_ENUM_TYPE(VarChannel15Volume, "channel15vol")
+  ETL_ENUM_TYPE(VarChannel16Volume, "channel16vol")
 
   ETL_ENUM_TYPE(ActionEdit, "edit")
   ETL_ENUM_TYPE(ActionExport, "export")
