@@ -13,12 +13,16 @@
 #include <Application/AppWindow.h>
 #include <nanoprintf.h>
 
+ViewType TableSettingsView::sourceViewType_ = VT_TABLE;
+
 TableSettingsView::TableSettingsView(GUIWindow &w, ViewData *viewData)
     : ScreenView(w, viewData), lengthFocused_(false) {}
 
 TableSettingsView::~TableSettingsView() {}
 
 void TableSettingsView::Reset() { lengthFocused_ = false; }
+
+void TableSettingsView::SetSourceViewType(ViewType vt) { sourceViewType_ = vt; }
 
 void TableSettingsView::updateLength(int delta) {
   Table &table = TableHolder::GetInstance()->GetTable(viewData_->currentTable_);
@@ -42,7 +46,7 @@ void TableSettingsView::ProcessButtonMask(unsigned short mask, bool pressed) {
 
   if (mask & EPBM_NAV) {
     if (mask & EPBM_UP) {
-      ViewType vt = viewData_->lastTableView_;
+      ViewType vt = sourceViewType_;
       ViewEvent ve(VET_SWITCH_VIEW, &vt);
       SetChanged();
       NotifyObservers(&ve);

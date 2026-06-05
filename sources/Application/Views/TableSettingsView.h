@@ -22,6 +22,9 @@ public:
   virtual void DrawView();
   virtual void OnFocus();
 
+  static void SetSourceViewType(ViewType vt);
+  static ViewType sourceViewType_;
+
 protected:
   void updateLength(int delta);
 
