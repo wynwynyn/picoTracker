@@ -121,11 +121,16 @@ bool TablePlayback::ProcessLocalCommand(int row, FourCC *commandList,
     } else {
       hopCount_[position_[row]][row]--;
     };
+    int len = table_->GetLength();
     if ((hopCount_[position_[row]][row] != 0) || (count == 0)) {
-      position_[row] = param & 0xF;
+      int hopRow = param & 0x7F;
+      if (hopRow >= len) {
+        hopRow = len - 1;
+      }
+      position_[row] = hopRow;
       hopped = true;
     } else {
-      position_[row] = (position_[row] + 1) % 16;
+      position_[row] = (position_[row] + 1) % len;
       hopped = true;
     };
     break;
@@ -207,17 +212,19 @@ void TablePlayback::ProcessStep(TablePlayerChange &tpc) {
 
       if (gs->UpdateGroove(groove_, true)) {
 
+        int len = table_->GetLength();
+
         if ((table_->cmd1_[position_[0]] != FourCC::InstrumentCommandHop) ||
             (!hopped_[0])) {
-          position_[0] = (position_[0] + 1) % 16;
+          position_[0] = (position_[0] + 1) % len;
         }
         if ((table_->cmd2_[position_[1]] != FourCC::InstrumentCommandHop) ||
             (!hopped_[1])) {
-          position_[1] = (position_[1] + 1) % 16;
+          position_[1] = (position_[1] + 1) % len;
         }
         if ((table_->cmd3_[position_[2]] != FourCC::InstrumentCommandHop) ||
             (!hopped_[2])) {
-          position_[2] = (position_[2] + 1) % 16;
+          position_[2] = (position_[2] + 1) % len;
         }
 
         hopped_[0] = false;
