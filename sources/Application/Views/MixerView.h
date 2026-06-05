@@ -43,9 +43,10 @@ private:
                            Player *player, GUITextProperties props,
                            bool forceRedraw = false);
   void initChannelVolumeFields();
+  void flipMixerPage(int direction);
 
-  // Channel volume UI fields
-  etl::vector<UIIntVarField, SONG_CHANNEL_COUNT> channelVolumeFields_;
+  // Channel volume UI fields (one page of visible channels)
+  etl::vector<UIIntVarField, SONG_VISIBLE_COL_COUNT> channelVolumeFields_;
   etl::vector<UIIntVarField, 1> masterVolumeField_; // Master volume field
 
   // Flags to track which UI elements need updating
