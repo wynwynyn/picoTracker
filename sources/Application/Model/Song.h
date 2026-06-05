@@ -49,6 +49,9 @@
 #define NOTE_C3 60
 #define EMPTY_SONG_VALUE 0xFF
 
+#define STREAM_MIX_BUS SONG_CHANNEL_COUNT
+#define MAX_BUS_COUNT (SONG_CHANNEL_COUNT + 1)
+
 class Song : Persistent {
 public:
   Song();
