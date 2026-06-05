@@ -21,12 +21,6 @@
 #include "PlayerChannel.h"
 #include "Services/Audio/AudioOut.h"
 
-#ifdef ADV
-#define STREAM_MIX_BUS 16
-#else
-#define STREAM_MIX_BUS 8
-#endif
-
 class PlayerMixer : public T_Singleton<PlayerMixer>,
                     public Observable,
                     public I_Observer {
