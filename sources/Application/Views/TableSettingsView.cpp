@@ -106,4 +106,7 @@ void TableSettingsView::DrawView() {
   drawNotes();
 }
 
-void TableSettingsView::OnFocus() { lengthFocused_ = false; }
+void TableSettingsView::OnFocus() {
+  lengthFocused_ = true;
+  isDirty_ = true;
+}

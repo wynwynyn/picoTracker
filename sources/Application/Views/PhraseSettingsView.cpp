@@ -106,4 +106,7 @@ void PhraseSettingsView::DrawView() {
   drawNotes();
 }
 
-void PhraseSettingsView::OnFocus() { lengthFocused_ = false; }
+void PhraseSettingsView::OnFocus() {
+  lengthFocused_ = true;
+  isDirty_ = true;
+}
