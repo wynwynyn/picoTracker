@@ -1,6 +1,6 @@
 # Experimental firmware testing
 
-This is an experimental branch containing features that are not in the official releases of the pT/pTA firmware. Some of them are very niche or specific features for my own preferences, and won't necessarily be suitable for commercial releases.
+This is an experimental branch containing features that are not in the official releases of the pT/pTA firmware. Some of them are very niche or specific features for my own preferences, and won't necessarily be suitable for consumer releases.
 
 If you somehow find this branch, compile it, and upload it to your pT, do so at your own risk/curiousity. Having said that, I'm happy to answer general questions about the extra features :) 
 
