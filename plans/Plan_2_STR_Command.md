@@ -137,8 +137,8 @@ if (rp->str_) {
     int newPos = rp->strAnchor_ + rp->strAdvance_ * rp->strCount_;
     // Clamp to loop boundaries (respects slice bounds)
     if (newPos >= rp->rendLoopEnd_ || newPos < rp->rendLoopStart_) {
-      newPos = rp->rendLoopStart_;   // wrap to start
-      rp->strCount_ = 0;
+      newPos = rp->strAnchor_;
+      rp->strCount_ = -1; // next ++ gives 0, so next retrigger lands at strAnchor_
     }
     rp->position_ = float(newPos);
     rp->strCountdown_ = rp->strSpeed_;

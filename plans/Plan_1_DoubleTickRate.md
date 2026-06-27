@@ -14,14 +14,24 @@ With 6 slices/step, PPQN = 6 × 4 = 24. With 12 slices/step, PPQN = 12 × 4 = 48
 
 ## Changes Required
 
-### 1. `sources/Application/Player/SyncMaster.cpp:14-16`
+### 1. `sources/Application/Player/SyncMaster.cpp:13-17`
+
+The define appears **twice** inside a `#ifdef WIN32 / #else / #endif` block — both must be changed:
 
 ```cpp
 // BEFORE:
+#ifdef WIN32
 #define AUDIO_SLICES_PER_STEP 6 // needs to be a multiple of 6 !
+#else
+#define AUDIO_SLICES_PER_STEP 6 // needs to be a multiple of 6 !
+#endif
 
 // AFTER:
+#ifdef WIN32
 #define AUDIO_SLICES_PER_STEP 12 // needs to be a multiple of 6 !
+#else
+#define AUDIO_SLICES_PER_STEP 12 // needs to be a multiple of 6 !
+#endif
 ```
 
 This halves `playSampleCount_` and `tickSampleCount_` — each slice is now half the real time, so slices run at 2× speed.
