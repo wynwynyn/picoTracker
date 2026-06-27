@@ -2,7 +2,7 @@
 
 This is an experimental repo for the picoTracker Advance, containing features that are not in the official releases of the pT/pTA firmware. Some of them are niche or specific features for my own preferences, and won't necessarily be suitable for consumer releases.
 
-It is probably behind the main pTA repo by quite a bit, and it diverged a lot, so this repo probably won't have the latest *official* updates and bugfixes. I'll try and keep the `master` branch in this repo up to date at least.
+The `experimental` branch is the main base for these features. It is behind the official `master` by quite a bit, and has diverged a lot. `experimental` probably won't have the latest *official* updates and bugfixes. I'll try and keep the `master` branch in this repo up to date at least.
 
 If you somehow find this branch, compile it, and upload it to your pT, do so at your own risk/curiousity. Having said that, I'm happy to answer general questions about the extra features :) 
 
