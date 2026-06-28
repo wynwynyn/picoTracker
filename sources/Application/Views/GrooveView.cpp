@@ -44,8 +44,8 @@ void GrooveView::updateCursorValue(int val, bool sync) {
   val += value;
   if (val < 1)
     val = 1;
-  if (val > 0xF)
-    val = 0xF;
+  if (val > 0x1F)
+    val = 0x1F;
   grooveData[position_] = val;
   isDirty_ = true;
 };
