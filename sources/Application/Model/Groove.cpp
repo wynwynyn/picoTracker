@@ -34,8 +34,8 @@ void Groove::Clear() {
   // Init all grooves with basic datas
   memset(data, NO_GROOVE_DATA, MAX_GROOVES * 0xF);
   for (int i = 0; i < MAX_GROOVES; i++) {
-    data[i][0] = 6;
-    data[i][1] = 6;
+    data[i][0] = 12;
+    data[i][1] = 12;
   };
   // init grooves selectah
   for (int i = 0; i < SONG_CHANNEL_COUNT; i++) {

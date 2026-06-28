@@ -499,7 +499,7 @@ bool SampleInstrument::Start(int channel, unsigned char midinote,
     };
     SyncMaster *sm = SyncMaster::GetInstance();
     int sampleCount = int(sm->GetTickSampleCount());
-    sampleCount *= (6 * 16);
+    sampleCount *= (12 * 16);
     rp->baseSpeed_ = fl2fp(length / float(sampleCount));
     rp->rendFirst_ = rp->rendLoopStart_;
     if (cleanstart) {

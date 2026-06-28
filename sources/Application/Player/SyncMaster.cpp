@@ -11,9 +11,9 @@
 #include "Services/Audio/Audio.h"
 
 #ifdef WIN32
-#define AUDIO_SLICES_PER_STEP 6 // needs to be a multiple of 6 !
+#define AUDIO_SLICES_PER_STEP 12 // needs to be a multiple of 6 !
 #else
-#define AUDIO_SLICES_PER_STEP 6 // needs to be a multiple of 6 !
+#define AUDIO_SLICES_PER_STEP 12 // needs to be a multiple of 6 !
 #endif
 
 SyncMaster::SyncMaster() { tableRatio_ = 1; }
@@ -46,7 +46,7 @@ void SyncMaster::NextSlice() {
 bool SyncMaster::MajorSlice() { return currentSlice_ == 0; };
 
 bool SyncMaster::TableSlice() {
-  int tableTick = currentSlice_ % (AUDIO_SLICES_PER_STEP / 6 * tableRatio_);
+  int tableTick = currentSlice_ % tableRatio_;
   return tableTick == 0;
 };
 
