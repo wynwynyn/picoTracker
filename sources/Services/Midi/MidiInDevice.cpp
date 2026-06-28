@@ -128,15 +128,6 @@ void MidiInDevice::treatChannelEvent(MidiMessage &event) {
 
   int midiChannel = event.status_ & MIDI_CHANNEL_MASK;
 
-  bool isMidiClockEvent = (event.status_ == MidiMessage::MIDI_CLOCK);
-
-  // display as hex
-  if (!isMidiClockEvent) {
-    Trace::Debug("midi:%02X:%02X:%02X", event.status_, event.data1_,
-                 event.data2_);
-    Trace::Debug("miditype:%02X", event.GetType());
-  }
-
   // First check for system real-time messages which need to be compared with
   // the full status byte
   if (event.status_ == MidiMessage::MIDI_CLOCK) {
@@ -168,13 +159,8 @@ void MidiInDevice::treatChannelEvent(MidiMessage &event) {
         // Get the audio channel this note is playing on
         int audioChannel = noteTracker_.unregisterNote(note, midiChannel);
         if (audioChannel >= 0) {
-          Trace::Debug("Stopping note %d on MIDI channel %d, audio channel %d",
-                       note, midiChannel, audioChannel);
           player->StopNote(instrumentIndex, audioChannel);
         }
-      } else {
-        Trace::Debug("Note %d not active on MIDI channel %d, not stopping",
-                     note, midiChannel);
       }
     }
   } break;
@@ -194,15 +180,8 @@ void MidiInDevice::treatChannelEvent(MidiMessage &event) {
         if (noteTracker_.isNoteActiveOnChannel(note, midiChannel)) {
           int audioChannel = noteTracker_.unregisterNote(note, midiChannel);
           if (audioChannel >= 0) {
-            Trace::Debug("Note off (vel=0): Stopping note %d on MIDI channel "
-                         "%d, audio channel %d",
-                         note, midiChannel, audioChannel);
             player->StopNote(instrumentIndex, audioChannel);
           }
-        } else {
-          Trace::Debug("Note off (vel=0): Note %d not active on MIDI channel "
-                       "%d, not stopping",
-                       note, midiChannel);
         }
       } else {
         // Get the next available audio channel for this note
@@ -212,15 +191,8 @@ void MidiInDevice::treatChannelEvent(MidiMessage &event) {
           // Register the note with the tracker
           if (noteTracker_.registerNote(note, midiChannel, audioChannel,
                                         value)) {
-            Trace::Debug("Playing note %d on MIDI channel %d (instrument %d), "
-                         "audio channel %d",
-                         note, midiChannel, instrumentIndex, audioChannel);
             player->PlayNote(instrumentIndex, audioChannel, note, value);
-          } else {
-            Trace::Debug("Failed to register note %d", note);
           }
-        } else {
-          Trace::Debug("No available audio channels for note %d", note);
         }
       }
     }
@@ -357,7 +329,6 @@ void MidiInDevice::processMidiData(uint8_t data) {
     // This is a data byte
     if (midiStatus == 0) {
       // Ignore data bytes without status
-      Trace::Debug("MIDI", "Ignored data byte without status: 0x%02X", data);
       return;
     }
 

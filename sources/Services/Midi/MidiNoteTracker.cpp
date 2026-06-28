@@ -24,8 +24,6 @@ bool MidiNoteTracker::registerNote(uint8_t note, uint8_t midiChannel,
                                    uint8_t velocity) {
   // Validate parameters
   if (note > 127 || midiChannel > 15) {
-    Trace::Debug("Invalid parameters in registerNote: note=%d, midiChannel=%d",
-                 note, midiChannel);
     return false;
   }
 
@@ -45,8 +43,6 @@ bool MidiNoteTracker::registerNote(uint8_t note, uint8_t midiChannel,
       availableChannel; // Audio channel = array index
   playingNotes_[availableChannel].velocity = velocity;
 
-  Trace::Debug("Note %d registered on MIDI channel %d, audio channel %d", note,
-               midiChannel, availableChannel);
   return true;
 }
 
@@ -107,15 +103,11 @@ int MidiNoteTracker::unregisterNote(uint8_t note, uint8_t midiChannel) {
       // Found the note, mark it as inactive
       int audioChannel = static_cast<int>(i); // Audio channel = array index
       activeNote.active = false;
-      Trace::Debug("Note %d unregistered from MIDI channel %d, stopping "
-                   "audio channel %d",
-                   note, midiChannel, audioChannel);
       return audioChannel;
     }
   }
 
   // Note not found
-  Trace::Debug("Note %d not found on MIDI channel %d", note, midiChannel);
   return -1;
 }
 
