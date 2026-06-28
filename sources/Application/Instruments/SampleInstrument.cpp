@@ -555,6 +555,16 @@ bool SampleInstrument::Start(int channel, unsigned char midinote,
     rp->retrigCount_ = 0;
     rp->retrigOffset_ = 0;
 
+    rp->str_ = false;
+    rp->strDeclick_ = false;
+    rp->strAdvance_ = 0.f;
+    rp->strSpeed_ = 0;
+    rp->strCountdown_ = 0;
+    rp->strCount_ = 0;
+    rp->strAnchor_ = 0;
+    rp->strGrainLen_ = 0.f;
+    rp->strGrainPos_ = 0.f;
+
     // Could click
 
     rp->couldClick_ = SHOULD_KILL_CLICKS;
@@ -683,6 +693,23 @@ bool SampleInstrument::Render(int channel, fixed *buffer, int size,
         }
         rp->retrigCount_--;
       };
+
+      // Process str/scr
+
+      if (rp->str_) {
+        if (rp->strCountdown_ == 0) {
+          rp->strCount_++;
+          float newPos = rp->strAnchor_ + rp->strAdvance_ * rp->strCount_;
+          if (newPos >= rp->rendLoopEnd_ || newPos < rp->rendLoopStart_) {
+            newPos = rp->strAnchor_;
+            rp->strCount_ = -1;
+          }
+          rp->position_ = newPos;
+          rp->strGrainPos_ = 0.f;
+          rp->strCountdown_ = rp->strSpeed_;
+        }
+        rp->strCountdown_--;
+      };
     }
 
     // Get additional parameters from variables
@@ -769,6 +796,7 @@ bool SampleInstrument::Render(int channel, fixed *buffer, int size,
 
     bool rpReverse = rp->reverse_;
     int rpKrateCount = rp->krateCount_;
+    bool strDeclick = rp->str_ && rp->strDeclick_;
 
     fixed *fltSpeed = flt->speed;
     fixed *fltHeight = flt->height;
@@ -1048,6 +1076,23 @@ bool SampleInstrument::Render(int channel, fixed *buffer, int size,
 
         s2 = fp_mul(s2, fixedpanl);
         t2 = fp_mul(t2, fixedpanr);
+
+        if (strDeclick) {
+          const float K = 48.0f;
+          float g = 1.0f;
+          if (rp->strGrainPos_ < K) {
+            g = rp->strGrainPos_ / K;
+          } else if (rp->strGrainPos_ > rp->strGrainLen_ - K) {
+            g = (rp->strGrainLen_ - rp->strGrainPos_) / K;
+          }
+          if (g < 0.f) {
+            g = 0.f;
+          }
+          fixed fg = fl2fp(g);
+          s2 = fp_mul(s2, fg);
+          t2 = fp_mul(t2, fg);
+          rp->strGrainPos_ += 1.0f;
+        }
 
         *result++ = s2;
         *result++ = t2;
@@ -1387,9 +1432,32 @@ void SampleInstrument::ProcessCommand(int channel, FourCC cc, ushort value) {
       rp->retrigLoop_ = loop;
       rp->retrigCount_ = loop;
       rp->retrigOffset_ = offset;
+      rp->str_ = false;
       rp->couldClick_ = SHOULD_KILL_CLICKS;
     } else {
       rp->retrig_ = false;
+    }
+  } break;
+
+  case FourCC::InstrumentCommandSTR:
+  case FourCC::InstrumentCommandSCR: {
+    unsigned char advance = (value >> 8);
+    unsigned char speed = (value & 0xFF);
+    if (speed != 0) {
+      rp->retrig_ = false;
+      rp->str_ = true;
+      rp->strDeclick_ = (cc == FourCC::InstrumentCommandSTR);
+      int loopLen = rp->rendLoopEnd_ - rp->rendLoopStart_;
+      rp->strAdvance_ = advance * (loopLen / 256.0f);
+      rp->strSpeed_ = speed;
+      rp->strCountdown_ = speed;
+      rp->strCount_ = 0;
+      rp->strAnchor_ = rp->rendFirst_;
+      rp->strGrainLen_ =
+          speed * SyncMaster::GetInstance()->GetTickSampleCount();
+      rp->strGrainPos_ = 0.f;
+    } else {
+      rp->str_ = false;
     }
   } break;
   case FourCC::InstrumentCommandLowPassFilter: {
