@@ -1441,8 +1441,8 @@ void SampleInstrument::ProcessCommand(int channel, FourCC cc, ushort value) {
 
   case FourCC::InstrumentCommandSTR:
   case FourCC::InstrumentCommandSCR: {
-    unsigned char advance = (value >> 8);   // aa
-    unsigned char speed = (value & 0xFF);   // bb
+    unsigned char advance = (value >> 8);
+    unsigned char speed = (value & 0xFF);
     if (speed != 0) {
       rp->retrig_ = false;
       rp->str_ = true;
