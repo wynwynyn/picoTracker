@@ -555,6 +555,16 @@ bool SampleInstrument::Start(int channel, unsigned char midinote,
     rp->retrigCount_ = 0;
     rp->retrigOffset_ = 0;
 
+    rp->str_ = false;
+    rp->strDeclick_ = false;
+    rp->strAdvance_ = 0.f;
+    rp->strSpeed_ = 0;
+    rp->strCountdown_ = 0;
+    rp->strCount_ = 0;
+    rp->strAnchor_ = 0;
+    rp->strGrainLen_ = 0.f;
+    rp->strGrainPos_ = 0.f;
+
     // Could click
 
     rp->couldClick_ = SHOULD_KILL_CLICKS;
@@ -1387,9 +1397,32 @@ void SampleInstrument::ProcessCommand(int channel, FourCC cc, ushort value) {
       rp->retrigLoop_ = loop;
       rp->retrigCount_ = loop;
       rp->retrigOffset_ = offset;
+      rp->str_ = false;
       rp->couldClick_ = SHOULD_KILL_CLICKS;
     } else {
       rp->retrig_ = false;
+    }
+  } break;
+
+  case FourCC::InstrumentCommandSTR:
+  case FourCC::InstrumentCommandSCR: {
+    unsigned char advance = (value >> 8);   // aa
+    unsigned char speed = (value & 0xFF);   // bb
+    if (speed != 0) {
+      rp->retrig_ = false;
+      rp->str_ = true;
+      rp->strDeclick_ = (cc == FourCC::InstrumentCommandSTR);
+      int loopLen = rp->rendLoopEnd_ - rp->rendLoopStart_;
+      rp->strAdvance_ = advance * (loopLen / 256.0f);
+      rp->strSpeed_ = speed;
+      rp->strCountdown_ = speed;
+      rp->strCount_ = 0;
+      rp->strAnchor_ = rp->rendFirst_;
+      rp->strGrainLen_ =
+          speed * SyncMaster::GetInstance()->GetTickSampleCount();
+      rp->strGrainPos_ = 0.f;
+    } else {
+      rp->str_ = false;
     }
   } break;
   case FourCC::InstrumentCommandLowPassFilter: {
