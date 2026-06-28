@@ -28,6 +28,8 @@ struct FourCC {
     InstrumentCommandGroove = 26,              // GROV
     InstrumentCommandHop = 27,                 // HOP
     InstrumentCommandRetrigger = 52,           // RTRG
+    InstrumentCommandSTR = 50,                 // STR (timestretch)
+    InstrumentCommandSCR = 73,                 // SCR (scrub)
     InstrumentCommandInstrumentRetrigger = 29, // IRTG
     InstrumentCommandKill = 30,                // KILL
     InstrumentCommandLegato = 31,              // LEGA
@@ -297,6 +299,8 @@ struct FourCC {
   ETL_ENUM_TYPE(InstrumentCommandHop, "HOP")
   ETL_ENUM_TYPE(InstrumentCommandLegato, "LEG")
   ETL_ENUM_TYPE(InstrumentCommandRetrigger, "RTG")
+  ETL_ENUM_TYPE(InstrumentCommandSTR, "STR")
+  ETL_ENUM_TYPE(InstrumentCommandSCR, "SCR")
   ETL_ENUM_TYPE(InstrumentCommandTempo, "TPO")
   ETL_ENUM_TYPE(InstrumentCommandMidiCC, "MCC")
   ETL_ENUM_TYPE(InstrumentCommandMidiPC, "MPC")
