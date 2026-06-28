@@ -37,6 +37,16 @@ struct renderParams {
   int retrigCount_;  // current tick countdown before retrig
   int retrigOffset_; // offset in ticks after retrig
 
+  bool str_;          // STR/SCR active
+  bool strDeclick_;   // true for STR (smooth), false for SCR (raw)
+  float strAdvance_;  // advance per grain in samples
+  int strSpeed_;      // ticks between grains
+  int strCountdown_;  // ticks until next grain
+  int strCount_;      // grains since trigger
+  int strAnchor_;     // start position captured when triggered
+  float strGrainLen_; // grain length in samples
+  float strGrainPos_; // samples since current grain start
+
   bool finished_; // the instrument has cut off
 
   fixed baseFCut_;
