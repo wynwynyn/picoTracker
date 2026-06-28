@@ -53,6 +53,14 @@ static char **getHelpLegend(FourCC command) {
     result[0] = (char *)("Retrigger: aabb");
     result[1] = (char *)("SAMPL:bb loop+aa ofst, MIDI:bb");
     break;
+  case FourCC::InstrumentCommandSTR:
+    result[0] = (char *)("Timestretch: aabb");
+    result[1] = (char *)("SAMPL:aa adv frac, bb grain, smooth");
+    break;
+  case FourCC::InstrumentCommandSCR:
+    result[0] = (char *)("Scrub: aabb");
+    result[1] = (char *)("SAMPL:aa adv frac, bb grain, raw");
+    break;
   case FourCC::InstrumentCommandTempo:
     result[0] = (char *)("Tempo: aabb");
     result[1] = (char *)("set tempo to hex value aabb");
