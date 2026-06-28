@@ -796,6 +796,7 @@ bool SampleInstrument::Render(int channel, fixed *buffer, int size,
 
     bool rpReverse = rp->reverse_;
     int rpKrateCount = rp->krateCount_;
+    bool strDeclick = rp->str_ && rp->strDeclick_;
 
     fixed *fltSpeed = flt->speed;
     fixed *fltHeight = flt->height;
@@ -1076,7 +1077,7 @@ bool SampleInstrument::Render(int channel, fixed *buffer, int size,
         s2 = fp_mul(s2, fixedpanl);
         t2 = fp_mul(t2, fixedpanr);
 
-        if (rp->str_ && rp->strDeclick_) {
+        if (strDeclick) {
           const float K = 48.0f;
           float g = 1.0f;
           if (rp->strGrainPos_ < K) {
