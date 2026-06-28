@@ -693,6 +693,23 @@ bool SampleInstrument::Render(int channel, fixed *buffer, int size,
         }
         rp->retrigCount_--;
       };
+
+      // Process str/scr
+
+      if (rp->str_) {
+        if (rp->strCountdown_ == 0) {
+          rp->strCount_++;
+          float newPos = rp->strAnchor_ + rp->strAdvance_ * rp->strCount_;
+          if (newPos >= rp->rendLoopEnd_ || newPos < rp->rendLoopStart_) {
+            newPos = rp->strAnchor_;
+            rp->strCount_ = -1;
+          }
+          rp->position_ = newPos;
+          rp->strGrainPos_ = 0.f;
+          rp->strCountdown_ = rp->strSpeed_;
+        }
+        rp->strCountdown_--;
+      };
     }
 
     // Get additional parameters from variables
@@ -1058,6 +1075,23 @@ bool SampleInstrument::Render(int channel, fixed *buffer, int size,
 
         s2 = fp_mul(s2, fixedpanl);
         t2 = fp_mul(t2, fixedpanr);
+
+        if (rp->str_ && rp->strDeclick_) {
+          const float K = 48.0f;
+          float g = 1.0f;
+          if (rp->strGrainPos_ < K) {
+            g = rp->strGrainPos_ / K;
+          } else if (rp->strGrainPos_ > rp->strGrainLen_ - K) {
+            g = (rp->strGrainLen_ - rp->strGrainPos_) / K;
+          }
+          if (g < 0.f) {
+            g = 0.f;
+          }
+          fixed fg = fl2fp(g);
+          s2 = fp_mul(s2, fg);
+          t2 = fp_mul(t2, fg);
+          rp->strGrainPos_ += 1.0f;
+        }
 
         *result++ = s2;
         *result++ = t2;
