@@ -136,7 +136,7 @@ void TableView::fillClipboardData() {
   ushort *src6 = table.param3_;
   ushort *dst6 = clipboard_.param3_;
 
-  int absStart = viewData_->tableOffset_ + clipboard_.row_;
+  int absStart = clipboard_.row_;
   for (int i = 0; i < clipboard_.height_; i++) {
     dst1[i] = src1[absStart + i];
     dst2[i] = src2[absStart + i];
@@ -203,7 +203,7 @@ void TableView::cutSelection() {
   uchar *dst5 = (unsigned char *)table.cmd3_;
   ushort *dst6 = table.param3_;
 
-  int absStart = viewData_->tableOffset_ + clipboard_.row_;
+  int absStart = clipboard_.row_;
   for (int i = 0; i < clipboard_.width_; i++) {
     for (int j = 0; j < clipboard_.height_; j++) {
       switch (i + clipboard_.col_) {
