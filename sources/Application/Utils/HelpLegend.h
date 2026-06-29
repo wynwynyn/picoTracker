@@ -55,11 +55,11 @@ static char **getHelpLegend(FourCC command) {
     break;
   case FourCC::InstrumentCommandSTR:
     result[0] = (char *)("Timestretch: aabb");
-    result[1] = (char *)("SAMPL:aa adv frac, bb grain, smooth");
+    result[1] = (char *)("SAMPL:aa rate, bb grain size");
     break;
   case FourCC::InstrumentCommandSCR:
     result[0] = (char *)("Scrub: aabb");
-    result[1] = (char *)("SAMPL:aa adv frac, bb grain, raw");
+    result[1] = (char *)("SAMPL:aa rate, bb grain size raw");
     break;
   case FourCC::InstrumentCommandTempo:
     result[0] = (char *)("Tempo: aabb");

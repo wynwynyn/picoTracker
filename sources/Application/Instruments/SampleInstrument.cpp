@@ -1447,14 +1447,13 @@ void SampleInstrument::ProcessCommand(int channel, FourCC cc, ushort value) {
       rp->retrig_ = false;
       rp->str_ = true;
       rp->strDeclick_ = (cc == FourCC::InstrumentCommandSTR);
-      int loopLen = rp->rendLoopEnd_ - rp->rendLoopStart_;
-      rp->strAdvance_ = advance * (loopLen / 256.0f);
+      float grainLen = speed * SyncMaster::GetInstance()->GetTickSampleCount();
+      rp->strGrainLen_ = grainLen;
+      rp->strAdvance_ = (advance / 255.0f) * grainLen;
       rp->strSpeed_ = speed;
       rp->strCountdown_ = speed;
       rp->strCount_ = 0;
       rp->strAnchor_ = rp->rendFirst_;
-      rp->strGrainLen_ =
-          speed * SyncMaster::GetInstance()->GetTickSampleCount();
       rp->strGrainPos_ = 0.f;
     } else {
       rp->str_ = false;
