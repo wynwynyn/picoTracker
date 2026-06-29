@@ -8,11 +8,11 @@ If you somehow find this branch, compile it, and upload it to your pT, do so at 
 
 All credit goes Xiphonics and the [picoTracker](https://github.com/xiphonics/picotracker) project!
 
-### Experimental features todo
+### Experimental features TODO
 
-Some features include:
 - [x] Sending `MCC` commands without having to trigger a note
 - [x] Sending `MPC` commands without having to trigger a note
+- [ ] Sending table commands without having to trigger a note (enabling silent MCC/MPC control in tables)
 - [x] Able to set phrase lengths longer than 16 steps (phrase options screen)
     - involved memory refactor - moving things to SDRAM instead
 - [x] 8 extra channels (16 total on ADV; horizontal song scroll, mixer page flip)
