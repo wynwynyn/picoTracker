@@ -16,8 +16,8 @@ Some features include:
 - [x] Able to set phrase lengths longer than 16 steps (phrase options screen)
     - involved memory refactor - moving things to SDRAM instead
 - [x] 8 extra channels (16 total on ADV; horizontal song scroll, mixer page flip)
-- [ ] Double the amount of ticks per row
-- [ ] Add timestretch command
+- [x] Double the amount of ticks per row
+- [x] Add timestretch command
 - [ ] MIDI effects
 - [ ] [options] key repeat delay
 - [ ] [options] default phrase length
