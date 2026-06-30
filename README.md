@@ -20,10 +20,8 @@ All credit goes Xiphonics and the [picoTracker](https://github.com/xiphonics/pic
 - [x] Add timestretch command
 - [ ] MIDI effects
 - [ ] [options] key repeat delay
-- [ ] [options] default phrase length
 - [ ] [very experimental] Able to set table speed
 - [x] [very experimental] Able to set table lengths
-- [ ] [very experimental] Chain tables together (trigger `TBL` from tables)
 
 These features will only be tested on pTA - support for pT has been pretty much dropped for this repo.
 
